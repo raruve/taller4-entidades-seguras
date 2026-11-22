@@ -110,6 +110,31 @@ async function cargar() {
 }
 
 /**
+ * Estado de los desplegables abiertos.
+ *
+ * El panel se repinta cada 15 segundos, al cambiar de pestaña y al pulsar
+ * «Actualizar ahora». Si el ponente tiene abierta la nota de un bloque del
+ * guion, un repintado no debe volvérsela a cerrar: se guarda qué desplegables
+ * están abiertos y se vuelven a abrir después de pintar.
+ */
+const estadoDesplegables = new Map();
+
+function registrarDesplegables() {
+  $$('details[data-bloque]').forEach((d) => {
+    d.addEventListener('toggle', () => {
+      estadoDesplegables.set(d.dataset.bloque, d.open);
+    });
+  });
+}
+
+function restaurarDesplegables() {
+  $$('details[data-bloque]').forEach((d) => {
+    const guardado = estadoDesplegables.get(d.dataset.bloque);
+    if (guardado !== undefined) d.open = guardado;
+  });
+}
+
+/**
  * Refresco automático del panel.
  *
  * Dos razones: los resultados en directo se actualizan solos durante la
@@ -175,6 +200,9 @@ function render() {
       <span class="nota">Mantiene los resultados al día y, en alojamientos que apagan el servicio por inactividad, lo mantiene despierto.</span>
     </div>
     <div id="contenido-pestana">${contenidoPestana()}</div>`;
+
+  registrarDesplegables();
+  restaurarDesplegables();
 
   $$('[data-pestana]').forEach((boton) => {
     boton.addEventListener('click', () => {
@@ -415,7 +443,7 @@ function pestanaGuion() {
                    </div>`
                 : ''
             }
-            <details class="nota-ponente">
+            <details class="nota-ponente" data-bloque="${escapar(b.id)}">
               <summary>Nota del ponente · base normativa (no se proyecta)</summary>
               <p>${escapar(b.nota)}</p>
             </details>

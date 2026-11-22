@@ -299,10 +299,21 @@ comprobar(
 const notaOculta = await admin.locator('.nota-ponente p').first().isVisible();
 comprobar(!notaOculta, 'La nota del ponente no se proyecta hasta abrirla');
 await admin.click('.nota-ponente summary');
-await admin.waitForTimeout(250);
+await admin.locator('.nota-ponente p').first().waitFor({ state: 'visible', timeout: 6000 });
 comprobar(
   await admin.locator('.nota-ponente p').first().isVisible(),
   'La nota del ponente se abre al pulsar'
+);
+
+// El repintado del panel (cada 15 s o al cambiar de pestaña) no debe cerrar
+// la nota que el ponente tiene abierta.
+await admin.click('[data-pestana="ideas"]');
+await admin.waitForTimeout(800);
+await admin.click('[data-pestana="guion"]');
+await admin.waitForTimeout(1500);
+comprobar(
+  await admin.locator('.nota-ponente p').first().isVisible(),
+  'La nota del ponente sigue abierta tras cambiar de pestaña'
 );
 await captura(admin, 'admin-guion');
 await admin.click('.nota-ponente summary');
