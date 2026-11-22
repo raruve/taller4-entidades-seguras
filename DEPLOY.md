@@ -4,6 +4,36 @@ Cómo llevar la app a internet (o a la red de la sala) para el taller.
 
 ---
 
+## 📍 Despliegue actual
+
+La app está **publicada y verificada** en:
+
+```
+https://taller4-app.onrender.com
+```
+
+| | |
+|---|---|
+| Panel de dinamización | `https://taller4-app.onrender.com/admin` |
+| Cartel A4 con QR | `https://taller4-app.onrender.com/cartela` |
+| Hoja imprimible | `https://taller4-app.onrender.com/imprimir` |
+| Aviso legal (art. 13) | `https://taller4-app.onrender.com/legal` |
+| Repositorio | `github.com/raruve/taller4-entidades-seguras` |
+
+Alojado en **Render, plan gratuito, región de Fráncfort**. La verificación
+(`deploy/verificar.sh`) da verde en las 16 comprobaciones: sin servicios de
+terceros, sin cookies, con backend propio, panel protegido e información del
+art. 13 RGPD publicada.
+
+**Recordatorio del plan gratuito:** el servicio se duerme a los 15 minutos sin
+tráfico (tarda ~1 minuto en despertar) y **no tiene disco persistente**, así que
+los datos de la sesión se pierden cuando se duerme. Mitigaciones implementadas
+en la app: aviso de reinicio, copia de seguridad descargable y restaurable, y
+refresco automático del panel. Ver el apartado «Si se despliega en el plan
+gratuito de Render».
+
+---
+
 ## Antes de nada: dos decisiones
 
 ### 1. ¿Dónde vive la app?

@@ -9,6 +9,19 @@ dependencias: la app es Node.js puro y sirve sus propios recursos.
 
 ---
 
+## 📍 Está publicada
+
+```
+https://taller4-app.onrender.com
+```
+
+Panel de dinamización en `/admin`, cartel A4 en `/cartela`, aviso legal en
+`/legal`. Alojada en Render (plan gratuito, Fráncfort) con el repositorio en
+`github.com/raruve/taller4-entidades-seguras`. Ver `DEPLOY.md` para el resto de
+opciones de publicación y para las particularidades del plan gratuito.
+
+---
+
 ## Puesta en marcha rápida
 
 ```bash

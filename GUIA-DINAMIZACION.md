@@ -21,6 +21,9 @@ programar.
 | **Copias de respaldo** | Imprime 4 copias del semáforo y de los cuatro escenarios (por si falla la conexión). |
 | **Wifi** | Confirmar con el centro que la sala tiene wifi para invitados. Es lo único que puede hacer fracasar la dinámica. |
 
+La app del taller está publicada en **https://taller4-app.onrender.com**
+(cartel A4 en `/cartela`, panel en `/admin`).
+
 > **Consejo:** deja el panel de dinamización abierto en una segunda pestaña o en
 > un portátil. La app de participantes va en el proyector; el panel, en tu
 > pantalla de control.

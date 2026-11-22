@@ -206,7 +206,7 @@ EXISTE_SERV=$(rd "$RD_API/services" | python3 -c "
 import sys,json
 d=json.load(sys.stdin)
 sv=d if isinstance(d,list) else d.get('services',[])
-print(next((s['id'] for s in sv if s.get('service',{}).get('name')=='$SERVICIO'),''))" 2>/dev/null || true)
+print(next((s.get('service',s).get('id','') for s in sv if s.get('service',s).get('name')=='$SERVICIO'),''))" 2>/dev/null || true)
 
 ADMIN_PASSWORD=$(python3 -c "import secrets;print(secrets.token_urlsafe(18))")
 
@@ -244,7 +244,13 @@ else
 JSON
 
   rd -X POST "$RD_API/services" --data-binary @/tmp/cuerpo-servicio.json -o /tmp/render-servicio.json
-  SERVICIO_ID=$(python3 -c 'import json;print(json.load(open("/tmp/render-servicio.json")).get("id",""))' 2>/dev/null || true)
+  # Render responde con {"deployId": "...", "service": {...}}: el id del
+  # servicio va anidado dentro de "service".
+  SERVICIO_ID=$(python3 -c '
+import json
+d=json.load(open("/tmp/render-servicio.json"))
+sv=d.get("service",d)
+print(sv.get("id",""))' 2>/dev/null || true)
   if [ -z "$SERVICIO_ID" ]; then
     rojo "No se ha podido crear el servicio. Respuesta de Render:"
     cat /tmp/render-servicio.json; echo

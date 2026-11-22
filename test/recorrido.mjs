@@ -212,7 +212,10 @@ await admin.fill('#password', 'incorrecta');
 await admin.click('#form-login button[type="submit"]');
 await admin.waitForSelector('#aviso-login .mensaje-error');
 comprobar(true, 'El panel rechaza una contraseña incorrecta');
-await admin.fill('#password', 'pruebas123');
+// La contraseña del panel: por defecto la de las pruebas locales, pero se
+// puede apuntar a un despliegue real con ADMIN_PASSWORD.
+const PASSWORD_ADMIN = process.env.ADMIN_PASSWORD || 'pruebas123';
+await admin.fill('#password', PASSWORD_ADMIN);
 await admin.click('#form-login button[type="submit"]');
 await admin.waitForSelector('.cifras', { timeout: 8000 });
 comprobar(true, 'El panel entra con la contraseña correcta');
