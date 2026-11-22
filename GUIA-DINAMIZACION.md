@@ -42,6 +42,7 @@ sin que nadie tenga que recargar nada.
 | **Dónde** | `https://taller4-app.onrender.com/panel` (pide la contraseña del taller) |
 | **Cómo se abre** | Desde `/admin` → «Resultados en directo» → «Abrir el panel del ponente». También se puede abrir a mano en otra pestaña. |
 | **Qué muestra** | Participantes que han respondido · termómetro · las 10 medidas del semáforo con el color de cada respuesta · respuestas por caso y por mesa · retos por categoría · ideas fuerza con sus votos. |
+| **El QR** | En la esquina inferior derecha está el código QR de acceso, para que quien llega tarde o se queda sin la app pueda entrar desde el móvil. Con un clic se repliega y con otro vuelve a salir. |
 | **Cómo se actualiza** | Solo, cada 5 segundos. Arriba a la derecha se ve la hora de la última lectura. |
 | **Pantalla completa** | Botón «Pantalla completa» (o `F11`). |
 | **Qué NO muestra** | El texto libre de los participantes: ese texto se revisa primero en «Revisión de textos» y no sale de la app hasta que se aprueba. |
