@@ -196,6 +196,7 @@ function idDeSesion(url) {
 function configuracionPublica(req) {
   const origen = PUBLIC_URL || `http://${req.headers.host || 'localhost:' + PORT}`;
   return {    evento: EVENTO,
+    urlPublica: origen,
     agenda: AGENDA,
     termometro: TERMOMETRO,
     casos: CASOS.map((c) => ({

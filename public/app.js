@@ -169,11 +169,6 @@ function pieHtml() {
   return `
     <div class="pie">
       <img src="/assets/pll-logo.svg" alt="Pérez-Llorca" />
-      <div>
-        Taller 4 · Entidades seguras en un mundo digital · Red Solidaria Santander.<br />
-        App sin registro, sin cookies, sin analítica y sin datos personales.
-        <a href="/legal" target="_blank" rel="noopener">Información sobre el tratamiento de datos</a>.
-      </div>
     </div>`;
 }
 
@@ -183,19 +178,21 @@ function pieHtml() {
 
 function vistaInicio() {
   const c = estado.config;
-  const info = c.infoLegalLarga
-    .map(
-      (bloque) => `<h4>${escapar(bloque.titulo)}</h4><p>${escapar(bloque.texto)}</p>`
-    )
-    .join('');
 
   const agenda = c.agenda
-    .map(
-      (a) => `<li>
-        <span class="min">${a.min}′</span>
-        <span><strong>${escapar(a.titulo)}</strong><span class="detalle">${escapar(a.detalle)}</span></span>
-      </li>`
-    )
+    .map((a) => {
+      const destino = a.vista || '';
+      return `<li>
+        <button type="button" class="agenda-enlace" data-ir="${escapar(destino)}"${destino ? '' : ' disabled'}>
+          <span class="min">${a.min}′</span>
+          <span class="texto-agenda">
+            <strong>${escapar(a.titulo)}</strong>
+            <span class="detalle">${escapar(a.detalle)}</span>
+          </span>
+          <span class="flecha" aria-hidden="true">›</span>
+        </button>
+      </li>`;
+    })
     .join('');
 
   return `
@@ -204,16 +201,9 @@ function vistaInicio() {
       <h2 class="titulo-grande">${escapar(c.evento.titulo)}</h2>
       <p class="subtitulo">${escapar(c.evento.subtitulo)}</p>
 
-      <div class="organiza">
-        <img src="/assets/pll-logo.svg" alt="Pérez-Llorca" />
-        <span class="texto">
-          <strong>${escapar(c.evento.entidadDinamiza)}</strong>
-          Dinamiza el taller · ${escapar(c.evento.secretaria)}, secretaría técnica
-        </span>
-      </div>
-
       <div class="tarjeta">
         <div class="kicker">Cómo va a funcionar</div>
+        <p class="nota intro-agenda">Toca un momento para ir directamente a esa parte del taller.</p>
         <ul class="agenda">${agenda}</ul>
         <div class="sellos">
           <span class="sello">Sin registro</span>
@@ -225,14 +215,26 @@ function vistaInicio() {
 
       <div class="tarjeta">
         <div class="kicker">Antes de empezar</div>
-        <p class="nota" style="margin-bottom:.6rem">${escapar(c.infoLegalCorta)}</p>
-        <details class="legal-detall">
-          <summary>Más información sobre el tratamiento de datos</summary>
-          <div class="legal">${info}</div>
-        </details>
+        <p class="nota">${escapar(c.infoLegalCorta)}</p>
+        <p class="legal-enlace">
+          <a href="/legal" target="_blank" rel="noopener">Ver toda la información sobre el tratamiento de datos</a>
+        </p>
       </div>
 
-      <button type="button" class="boton boton-primario" data-ir="termometro">Empezar</button>
+      <div class="acciones-inicio">
+        <button type="button" class="boton boton-primario" data-ir="termometro">Empezar</button>
+        <button type="button" class="boton boton-plano" data-ir="cierre">Ver el cierre del taller</button>
+      </div>
+
+      <div class="acceso-qr">
+        <img src="/api/qr.svg" alt="Código QR de acceso a la app" />
+        <p class="qr-texto">
+          <strong>Entra desde el móvil</strong>
+          Escanea este código con la cámara para abrir la app en el teléfono.
+          ${c.urlPublica ? `<span class="qr-url">${escapar(c.urlPublica)}</span>` : ''}
+        </p>
+      </div>
+
       ${pieHtml()}
     </section>`;
 }

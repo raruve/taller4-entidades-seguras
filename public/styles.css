@@ -631,32 +631,6 @@ button:focus-visible {
   margin-bottom: 1rem;
 }
 
-.organiza {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 0;
-  border-top: 1px solid var(--linea);
-  border-bottom: 1px solid var(--linea);
-  margin-bottom: 1rem;
-}
-
-.organiza img {
-  height: 1.5rem;
-  width: auto;
-}
-
-.organiza .texto {
-  font-size: 0.75rem;
-  color: var(--texto-suave);
-  line-height: 1.4;
-}
-
-.organiza .texto strong {
-  color: var(--azul);
-  display: block;
-}
-
 /* Agenda */
 .agenda {
   list-style: none;
@@ -665,12 +639,7 @@ button:focus-visible {
 }
 
 .agenda li {
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-  padding: 0.55rem 0;
   border-top: 1px solid var(--linea);
-  font-size: 0.88rem;
 }
 
 .agenda li:first-child {
@@ -689,6 +658,132 @@ button:focus-visible {
   display: block;
   color: var(--texto-suave);
   font-size: 0.8rem;
+}
+
+/* Filas de la agenda: cada momento salta a su sección */
+.agenda-enlace {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0.55rem 0;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.agenda-enlace .texto-agenda {
+  flex: 1 1 auto;
+}
+
+.agenda-enlace .texto-agenda strong {
+  transition: color 0.15s ease;
+}
+
+.agenda-enlace:hover .texto-agenda strong {
+  color: var(--azul);
+}
+
+.agenda-enlace .flecha {
+  flex: 0 0 auto;
+  color: var(--coral);
+  font-size: 1.25rem;
+  line-height: 1.1;
+  opacity: 0.65;
+}
+
+.agenda-enlace:hover .flecha {
+  opacity: 1;
+}
+
+.agenda-enlace:focus-visible {
+  outline: 2px solid var(--azul);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.agenda-enlace:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.intro-agenda {
+  margin-bottom: 0.5rem;
+}
+
+/* Accesos de la pantalla de inicio */
+.acciones-inicio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.acciones-inicio .boton-primario {
+  width: 100%;
+}
+
+.acciones-inicio .boton-plano {
+  width: auto;
+  color: var(--azul);
+  text-decoration: underline;
+}
+
+.legal-enlace {
+  margin: 0.55rem 0 0;
+  font-size: 0.82rem;
+}
+
+.legal-enlace a {
+  color: var(--azul);
+  font-weight: 600;
+}
+
+/* Código QR de acceso */
+.acceso-qr {
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+  margin-top: 0.9rem;
+  padding: 0.8rem;
+  background: var(--papel);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-grande);
+  box-shadow: var(--sombra);
+}
+
+.acceso-qr img {
+  flex: 0 0 auto;
+  width: 6.4rem;
+  height: 6.4rem;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.acceso-qr .qr-texto {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--texto-suave);
+}
+
+.acceso-qr .qr-texto strong {
+  display: block;
+  color: var(--azul);
+  font-size: 0.9rem;
+  margin-bottom: 0.1rem;
+}
+
+.acceso-qr .qr-url {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.74rem;
+  color: var(--gris);
+  word-break: break-all;
 }
 
 .sellos {
@@ -843,17 +938,16 @@ details.legal-detall[open] > summary::before {
   border-top: 1px solid var(--linea);
   margin-top: 1.5rem;
   padding: 1rem 0 0.5rem;
-  font-size: 0.72rem;
-  color: var(--texto-suave);
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
 }
 
 .pie img {
-  height: 1.1rem;
-  width: auto;
-  opacity: 0.85;
+  align-self: center;
+  width: 9.5rem;
+  height: auto;
+  opacity: 0.9;
 }
 
 /* ------------------------------------------------------------------

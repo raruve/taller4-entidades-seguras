@@ -76,13 +76,53 @@ comprobar((await page.title()).includes('Entidades seguras'), 'El título de la 
 comprobar(await page.locator('.titulo-grande').isVisible(), 'Se muestra el título del taller');
 comprobar(await page.locator('#codigo-sesion').isVisible(), 'Se muestra el código de sesión');
 comprobar((await page.locator('.agenda li').count()) === 6, 'La agenda muestra los 6 momentos');
+comprobar(
+  (await page.locator('.agenda-enlace[data-ir]').count()) === 6,
+  'Los 6 momentos de la agenda son navegables'
+);
+comprobar((await page.locator('.organiza').count()) === 0, 'Ya no aparece el bloque de marca en cabecera');
+comprobar((await page.locator('.pie div').count()) === 0, 'El pie solo conserva el logo');
+await page.waitForSelector('.acceso-qr img', { timeout: 8000 });
+comprobar(await page.locator('.acceso-qr img').isVisible(), 'Se muestra el código QR de acceso');
+comprobar(
+  (await page.locator('.acceso-qr img').getAttribute('src')) === '/api/qr.svg',
+  'El QR de inicio lo sirve la propia app'
+);
 await captura(page, 'inicio');
 
+console.log('\n▸ Saltar a cada sección desde el inicio');
+const SALTOS = [
+  { indice: 0, esperado: 'termometro', nombre: 'Termómetro digital' },
+  { indice: 1, esperado: 'mesas', nombre: 'Lo esencial' },
+  { indice: 4, esperado: 'semaforo', nombre: 'Semáforo' },
+  { indice: 5, esperado: 'retos', nombre: 'Retos e ideas fuerza' }
+];
+for (const salto of SALTOS) {
+  await page.goto(`${BASE}/#/inicio`, { waitUntil: 'networkidle' });
+  await page.waitForSelector('.agenda-enlace');
+  const enlace = page.locator('.agenda-enlace[data-ir]').nth(salto.indice);
+  const destino = await enlace.getAttribute('data-ir');
+  if (destino !== salto.esperado) {
+    comprobar(false, `«${salto.nombre}» lleva a «${salto.esperado}» (lleva a «${destino}»)`);
+    continue;
+  }
+  await enlace.click();
+  await esperarHash(page, salto.esperado);
+  comprobar(true, `«${salto.nombre}» salta a «${salto.esperado}»`);
+}
+
 console.log('\n▸ Información legal (art. 13)');
-await page.click('details.legal-detall summary');
-comprobar(await page.locator('.legal h4').first().isVisible(), 'La información legal se despliega');
-comprobar((await page.locator('.legal h4').count()) >= 8, 'La información legal tiene todas las capas');
-await captura(page, 'inicio-legal');
+await page.goto(`${BASE}/#/inicio`, { waitUntil: 'networkidle' });
+await page.waitForSelector('.portada');
+comprobar(
+  (await page.locator('.portada details.legal-detall').count()) === 0,
+  'La pantalla de inicio ya no tiene el apartado desplegable'
+);
+comprobar(
+  (await page.locator('.legal-enlace a[href="/legal"]').count()) === 1,
+  'La pantalla de inicio enlaza con la información legal completa'
+);
+await captura(page, 'inicio');
 
 console.log('\n▸ Termómetro digital');
 await page.click('[data-ir="termometro"]');
@@ -391,6 +431,14 @@ console.log('\n▸ Cierre');
 await page.click('#btn-siguiente');
 await page.waitForSelector('.mensajes, .titulo-grande');
 comprobar((await page.locator('.titulo-grande').innerText()).includes('Lo que os lleváis'), 'La pantalla de cierre se muestra');
+comprobar(
+  (await page.locator('details.legal-detall .legal h4').count()) >= 8,
+  'El cierre mantiene la información legal completa por capas'
+);
+comprobar(
+  (await page.locator('a[href="/legal"]').count()) >= 1,
+  'El cierre enlaza con la página legal'
+);
 await captura(page, 'cierre');
 
 console.log('\n▸ Panel de dinamización · resto de pestañas');
