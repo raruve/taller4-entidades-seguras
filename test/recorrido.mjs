@@ -298,6 +298,31 @@ comprobar(
   (await panel.locator('.caso-panel').count()) === 4,
   'El panel muestra los cuatro casos con sus respuestas'
 );
+// El QR de acceso se proyecta en la esquina para que quien llega tarde pueda
+// entrar con el móvil.
+comprobar(await panel.locator('#qr-sala img').isVisible(), 'El panel del ponente muestra el QR de acceso');
+comprobar(
+  (await panel.locator('#qr-sala img').getAttribute('src')) === '/api/qr.svg',
+  'El QR del panel lo sirve la propia app'
+);
+const esquina = await panel.locator('#qr-sala').boundingBox();
+const tamano = await page.viewportSize();
+comprobar(
+  esquina.x + esquina.width >= tamano.width - 40 && esquina.y + esquina.height >= tamano.height - 40,
+  'El QR del panel está en la esquina inferior derecha'
+);
+await panel.locator('#qr-sala').click();
+await panel.waitForTimeout(300);
+comprobar(
+  await panel.locator('#qr-sala').isVisible(),
+  'El QR del panel se puede ocultar y volver a mostrar'
+);
+await panel.locator('#qr-sala').click();
+await panel.waitForTimeout(300);
+comprobar(
+  await panel.locator('#qr-sala img').isVisible(),
+  'El QR del panel vuelve a mostrarse tras ocultarlo'
+);
 // Lo que se proyecta en la sala no puede incluir el texto libre de los
 // participantes: ese texto se revisa antes de compartirlo.
 const textoProyectado = await panel.locator('#contenido').innerText();

@@ -285,6 +285,15 @@ async function iniciar() {
     }
   });
 
+  // El QR de la esquina se puede ocultar con un clic: hay momentos en los que
+  // molesta en pantalla (por ejemplo, al compartir otra cosa).
+  const qrSala = $('#qr-sala');
+  if (qrSala) {
+    qrSala.addEventListener('click', () => {
+      qrSala.classList.toggle('replegado');
+    });
+  }
+
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && estado.token) cargar();
   });

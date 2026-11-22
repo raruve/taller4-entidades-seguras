@@ -443,6 +443,64 @@ body.panel-ponente {
   font-variant-numeric: tabular-nums;
 }
 
+/* --- Código QR de acceso (esquina inferior derecha) --- */
+
+.qr-sala {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.55rem 0.6rem 0.45rem;
+  background: var(--papel);
+  border: 0;
+  border-radius: var(--radio-grande);
+  box-shadow: 0 6px 26px rgba(0, 0, 0, 0.45);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.qr-sala img {
+  display: block;
+  width: 6.2rem;
+  height: 6.2rem;
+}
+
+.qr-sala span {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.qr-sala:hover {
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
+}
+
+.qr-sala:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 3px;
+}
+
+.qr-sala.replegado {
+  padding: 0.4rem 0.25rem;
+}
+
+.qr-sala.replegado img {
+  display: none;
+}
+
+.qr-sala.replegado span {
+  writing-mode: vertical-rl;
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  max-height: 5rem;
+}
+
 /* --- Pie --- */
 
 .panel-pie {
@@ -451,6 +509,7 @@ body.panel-ponente {
   gap: 0.6rem;
   justify-content: space-between;
   padding: 0.8rem 1.6rem 1.4rem;
+  padding-right: 12rem;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   font-size: 0.75rem;
   color: #8fb0c4;
@@ -481,11 +540,30 @@ body.panel-ponente {
     padding-right: 1rem;
   }
 
+  .panel-pie {
+    padding-bottom: 7rem;
+  }
+
   .medida-panel .texto {
     flex: 1 1 calc(100% - 2.2rem);
   }
 
   .medida-panel .pildoras {
     margin-left: 2.2rem;
+  }
+
+  .qr-sala {
+    right: 0.6rem;
+    bottom: 0.6rem;
+    padding: 0.4rem;
+  }
+
+  .qr-sala img {
+    width: 4.6rem;
+    height: 4.6rem;
+  }
+
+  .qr-sala span {
+    font-size: 0.56rem;
   }
 }
