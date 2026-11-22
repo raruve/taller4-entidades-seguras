@@ -242,6 +242,37 @@ con la red local, siempre que el wifi de invitados llegue a ese portátil.
 
 ---
 
+## ⚠️ Si se despliega en el plan gratuito de Render
+
+El plan gratuito tiene dos limitaciones que conviene tener presentes:
+
+| Limitación | Qué significa | Qué hemos hecho |
+|---|---|---|
+| **Se duerme a los 15 min sin tráfico** y tarda **~1 min** en despertar | La primera persona que abra el QR tras un rato sin actividad espera alrededor de un minuto | El panel refresca solo cada 15 s, así que **con el panel abierto el servicio no se duerme**. Aun así, ábrelo 10 minutos antes de empezar. |
+| **No admite disco persistente** | Todo lo que hay en `data/` (respuestas, mesas, ideas, agregados, auditoría) **se pierde cuando el servicio se duerme o se reinicia** | El panel avisa si detecta un reinicio, y hay **copia de seguridad** descargable y restaurable. |
+
+Esto no es un detalle menor: sin disco, si el servicio se duerme entre la
+puesta en común y la descarga de resultados para Fresno, esos resultados se
+habrían perdido. Con las dos medidas de arriba (despertar antes, descargar la
+copia al terminar) el plan gratuito es perfectamente utilizable para un taller
+de 90 minutos.
+
+**El plan de pago (`starter`, 7 €/mes) sí admite disco persistente** y con él
+el problema desaparece: las respuestas sobreviven a cualquier reinicio y el
+borrado a los 10 días queda hecho de forma automática y documentada. Si el
+presupuesto lo permite, es lo recomendable.
+
+### Rutina con el plan gratuito
+
+| Cuándo | Qué hacer |
+|---|---|
+| 10 min antes del taller | Abre la URL de la app y deja el panel de dinamización abierto. El servicio se despierta y ya no se duerme. |
+| Durante el taller | El panel refresca solo. Si ves el aviso «El servicio se ha reiniciado», restaura la copia. |
+| Al terminar, **antes de cerrar el panel** | Panel → «Descargas y privacidad» → **Descargar copia**. Guárdala en el ordenador. |
+| Después | Descarga también los resultados agregados para Fresno y los textos revisados. |
+
+---
+
 ## Lista de comprobación del día del taller
 
 - [ ] La app responde en la URL pública (prueba con el móvil y con datos
@@ -254,6 +285,8 @@ con la red local, siempre que el wifi de invitados llegue a ese portátil.
 - [ ] Impresas las copias de respaldo: escenarios y semáforo.
 - [ ] Al final: revisión de textos, descarga de resultados para Fresno y
       comprobación del registro de auditoría.
+- [ ] Al final: **copia de seguridad** descargada desde «Descargas y
+      privacidad» (imprescindible si el alojamiento no tiene disco).
 
 ---
 

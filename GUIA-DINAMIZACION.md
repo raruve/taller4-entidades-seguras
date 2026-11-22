@@ -158,6 +158,7 @@ Cada taller aporta **dos ideas fuerza** y sus conclusiones al cierre general
 | **Descargar los resultados para Fresno** | Panel → «Descargas y privacidad» → «Resultados (CSV / JSON)» |
 | **Descargar los textos revisados** (solo los aprobados) | Panel → «Descargas y privacidad» → «Textos revisados (CSV)» |
 | **Comprobar el registro de auditoría** | Panel → «Descargas y privacidad» → «Registro de auditoría» |
+| **Descargar la copia de seguridad de la sesión** (imprescindible si el alojamiento no tiene disco) | Panel → «Descargas y privacidad» → «Descargar copia» |
 
 ### Qué se comparte con Fresno y qué no
 
@@ -207,3 +208,22 @@ exportaciones.
 **¿Y si se cae internet?**
 La app es «servidor propio»: si los participantes no llegan al servidor, no
 funciona. Ten las copias impresas de los escenarios y del semáforo como plan B.
+
+---
+
+## Si el servicio se ha reiniciado
+
+Si el alojamiento no tiene disco persistente, el servicio puede reiniciarse
+(por ejemplo, si se queda sin tráfico) y con él se pierden las respuestas
+recogidas. La app lo detecta: el panel muestra un aviso rojo en cuanto
+identifica un arranque distinto del anterior.
+
+Qué hacer:
+
+1. Mira si tienes una **copia de seguridad** descargada. Si la tienes,
+   restáurala en «Descargas y privacidad» → «Restaurar desde un fichero».
+2. Si no la tienes, no hay nada que recuperar: sigue adelante con la sesión y
+   anota en tus notas lo que se había dicho hasta ese momento. Con una
+   explicación breve al grupo, la dinámica se reconduce sin problema.
+3. **Para las personas participantes no se ve ningún error**: solo hay que
+   volver a abrir el cuestionario.

@@ -275,6 +275,61 @@ comprobar(
 );
 await captura(admin, 'admin-checklist');
 
+console.log('\n▸ Copia de seguridad y aviso de reinicio');
+await admin.click('[data-pestana="descargas"]');
+await admin.waitForSelector('#btn-copia-descargar', { timeout: 8000 });
+comprobar(
+  await admin.locator('#btn-copia-descargar').isVisible(),
+  'El panel ofrece descargar una copia de seguridad'
+);
+comprobar(
+  await admin.locator('#btn-copia-restaurar').isVisible(),
+  'El panel ofrece restaurar una copia'
+);
+
+// La copia se pide con el token del panel, como haría el navegador.
+const TOKEN_ADMIN = await admin.evaluate(() => sessionStorage.getItem('t4_admin'));
+const copia = await admin.evaluate(async (token) => {
+  const r = await fetch('/api/admin/copia', { headers: { 'X-Admin-Token': token } });
+  return { ok: r.ok, cuerpo: await r.json() };
+}, TOKEN_ADMIN);
+comprobar(copia.ok, 'La copia de seguridad se descarga con el token del panel');
+comprobar(
+  copia.cuerpo.formato === 'taller4-copia' && Boolean(copia.cuerpo.respuestas),
+  'La copia contiene el estado completo de la sesión'
+);
+comprobar(
+  Boolean(copia.cuerpo.arranque && copia.cuerpo.arranque.id),
+  'La copia incluye la marca de arranque del servicio'
+);
+
+const restauracionInvalida = await admin.evaluate(async (token) => {
+  const r = await fetch('/api/admin/copia', {
+    method: 'POST',
+    headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ formato: 'otra-cosa' })
+  });
+  return r.status;
+}, TOKEN_ADMIN);
+comprobar(
+  restauracionInvalida === 400,
+  'Una copia inválida se rechaza sin tocar los datos'
+);
+
+const arranqueEnResumen = await admin.evaluate(async (token) => {
+  const r = await fetch('/api/admin/resumen', { headers: { 'X-Admin-Token': token } });
+  return (await r.json()).arranque;
+}, TOKEN_ADMIN);
+comprobar(
+  Boolean(arranqueEnResumen && arranqueEnResumen.id),
+  'El resumen expone la marca de arranque para detectar reinicios'
+);
+
+comprobar(
+  await admin.locator('#refresco-auto').isChecked(),
+  'El refresco automático viene activado (mantiene el servicio despierto)'
+);
+
 console.log('\n▸ Preparar las ideas fuerza para la votación');
 await admin.click('[data-pestana="ideas"]');
 await admin.waitForSelector('#nueva-idea');

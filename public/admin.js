@@ -8,7 +8,12 @@ const estado = {
   resumen: null,
   pestana: 'resultados',
   ideasSeleccionadas: new Set(),
-  votacionAbierta: false
+  votacionAbierta: false,
+  // Último identificador de arranque del servicio visto en esta sesión del
+  // navegador. Si cambia, el servicio se ha reiniciado y, sin disco
+  // persistente, los datos de la sesión anterior se han perdido.
+  arranqueVisto: sessionStorage.getItem('t4_arranque') || null,
+  refrescoAuto: sessionStorage.getItem('t4_refresco') !== 'no'
 };
 
 const $ = (sel, raiz = document) => raiz.querySelector(sel);
@@ -104,6 +109,32 @@ async function cargar() {
   render();
 }
 
+/**
+ * Refresco automático del panel.
+ *
+ * Dos razones: los resultados en directo se actualizan solos durante la
+ * sesión y, en un alojamiento que apaga el servicio por inactividad (como el
+ * plan gratuito), mantener el panel abierto mantiene el servicio despierto.
+ */
+let temporizadorRefresco = null;
+
+function activarRefresco(activo) {
+  if (temporizadorRefresco) {
+    clearInterval(temporizadorRefresco);
+    temporizadorRefresco = null;
+  }
+  if (!activo) return;
+  temporizadorRefresco = setInterval(() => {
+    // No se recarga mientras se está escribiendo un texto o hay un diálogo
+    // abierto: no queremos perder lo que la persona está tecleando.
+    if (document.querySelector('dialog[open]')) return;
+    if (document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+      return;
+    }
+    cargar();
+  }, 15000);
+}
+
 function render() {
   const r = estado.resumen;
   const c = r.conservacion;
@@ -126,6 +157,7 @@ function render() {
   ];
 
   $('#admin').innerHTML = `
+    ${avisoReinicio()}
     <div class="panel-nav">
       ${pestanas
         .map(
@@ -134,6 +166,13 @@ function render() {
         )
         .join('')}
       <button type="button" data-salir="1" style="margin-left:auto">Salir</button>
+    </div>
+    <div class="barra-refresco">
+      <label>
+        <input type="checkbox" id="refresco-auto" ${estado.refrescoAuto === false ? '' : 'checked'} />
+        Refrescar automáticamente cada 15 s
+      </label>
+      <span class="nota">Mantiene los resultados al día y, en alojamientos que apagan el servicio por inactividad, lo mantiene despierto.</span>
     </div>
     <div id="contenido-pestana">${contenidoPestana()}</div>`;
 
@@ -144,6 +183,15 @@ function render() {
     });
   });
 
+  const refresco = $('#refresco-auto');
+  if (refresco) {
+    refresco.addEventListener('change', () => {
+      estado.refrescoAuto = refresco.checked;
+      sessionStorage.setItem('t4_refresco', refresco.checked ? 'si' : 'no');
+      activarRefresco(refresco.checked);
+    });
+  }
+
   $('[data-salir]').addEventListener('click', () => {
     estado.token = null;
     sessionStorage.removeItem('t4_admin');
@@ -151,6 +199,36 @@ function render() {
   });
 
   conectarPestana();
+  activarRefresco(estado.refrescoAuto !== false);
+}
+
+/**
+ * Aviso de reinicio del servicio.
+ *
+ * En un alojamiento sin disco persistente, cuando el servicio se duerme o se
+ * reinicia se pierde todo lo que había en el sistema de ficheros. Si el
+ * identificador de arranque ha cambiado desde la última visita, avisamos
+ * antes de que la persona dinamizadora empiece a recoger datos pensando que
+ * están los de antes.
+ */
+function avisoReinicio() {
+  const arranque = estado.resumen && estado.resumen.arranque;
+  if (!arranque || !arranque.id) return '';
+
+  const visto = estado.arranqueVisto;
+  if (visto && visto !== arranque.id) {
+    return `
+      <div class="aviso-reinicio">
+        <strong>El servicio se ha reiniciado.</strong>
+        Si el alojamiento no tiene disco persistente, las respuestas, las mesas
+        y los resultados de la sesión anterior se han perdido. Si tenías una
+        copia de seguridad, restáurala en «Descargas y privacidad». Si no la
+        tenías, empieza de cero: sigue adelante con laYNAMIC…
+      </div>`;
+  }
+
+  sessionStorage.setItem('t4_arranque', arranque.id);
+  return '';
 }
 
 /* ------------------------------------------------------------------
@@ -342,6 +420,15 @@ function pestanaGuion() {
           .join('')}
       </section>
     </div>`;
+}
+
+/** Muestra un mensaje breve en un contenedor del panel. */
+function mostrarAviso(selector, texto, tipo = 'ok') {
+  const destino = $(selector);
+  if (!destino) return;
+  destino.innerHTML = `<div class="mensaje mensaje-${tipo === 'error' ? 'error' : 'ok'}">${escapar(
+    texto
+  )}</div>`;
 }
 
 function marcasVerificacion(id) {
@@ -640,6 +727,17 @@ function pestanaDescargas() {
       </section>
 
       <section class="tarjeta">
+        <div class="kicker">Copia de seguridad de la sesión</div>
+        <p class="nota">Guarda en tu ordenador todo el estado de la sesión (respuestas, mesas, ideas, agregados y auditoría). <strong>Hazlo al terminar el taller</strong>: si el alojamiento no tiene disco persistente, los datos se pierden en cuanto el servicio se duerme, y con esta copia puedes restaurarlos.</p>
+        <div class="acciones">
+          <button type="button" class="boton boton-primario" id="btn-copia-descargar">Descargar copia</button>
+          <button type="button" class="boton boton-linea" id="btn-copia-restaurar">Restaurar desde un fichero</button>
+        </div>
+        <input type="file" id="fichero-copia" accept="application/json,.json" hidden />
+        <div id="aviso-copia"></div>
+      </section>
+
+      <section class="tarjeta">
         <div class="kicker">Registro de auditoría</div>
         <div id="auditoria"></div>
       </section>
@@ -691,6 +789,69 @@ function pestanaProyector() {
 function conectarPestana() {
   const refrescar = $('#btn-refrescar');
   if (refrescar) refrescar.addEventListener('click', cargar);
+
+  // Copia de seguridad
+  const btnCopiar = $('#btn-copia-descargar');
+  if (btnCopiar) {
+    btnCopiar.addEventListener('click', async () => {
+      btnCopiar.disabled = true;
+      try {
+        const respuesta = await fetch('/api/admin/copia', {
+          headers: { 'X-Admin-Token': estado.token }
+        });
+        if (!respuesta.ok) throw new Error('No se ha podido generar la copia.');
+        const texto = await respuesta.text();
+        const url = URL.createObjectURL(new Blob([texto], { type: 'application/json' }));
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = `taller4-copia-${new Date().toISOString().slice(0, 10)}.json`;
+        enlace.click();
+        URL.revokeObjectURL(url);
+        mostrarAviso('#aviso-copia', 'Copia descargada. Guárdala en un sitio seguro.', 'ok');
+      } catch (error) {
+        mostrarAviso('#aviso-copia', error.message, 'error');
+      } finally {
+        btnCopiar.disabled = false;
+      }
+    });
+  }
+
+  const btnRestaurar = $('#btn-copia-restaurar');
+  const ficheroCopia = $('#fichero-copia');
+  if (btnRestaurar && ficheroCopia) {
+    btnRestaurar.addEventListener('click', () => ficheroCopia.click());
+    ficheroCopia.addEventListener('change', async () => {
+      const fichero = ficheroCopia.files && ficheroCopia.files[0];
+      if (!fichero) return;
+      const confirmar = window.confirm(
+        'Restaurar la copia sobrescribirá los datos actuales de la sesión. ¿Continuar?'
+      );
+      if (!confirmar) {
+        ficheroCopia.value = '';
+        return;
+      }
+      try {
+        const contenido = await fichero.text();
+        const respuesta = await fetch('/api/admin/copia', {
+          method: 'POST',
+          headers: { 'X-Admin-Token': estado.token, 'Content-Type': 'application/json' },
+          body: contenido
+        });
+        const datos = await respuesta.json();
+        if (!respuesta.ok) throw new Error(datos.error || 'No se ha podido restaurar.');
+        mostrarAviso(
+          '#aviso-copia',
+          `Copia restaurada: ${datos.sesiones} sesiones, ${datos.mesas} mesas y ${datos.ideas} ideas.`,
+          'ok'
+        );
+        await cargar();
+      } catch (error) {
+        mostrarAviso('#aviso-copia', error.message, 'error');
+      } finally {
+        ficheroCopia.value = '';
+      }
+    });
+  }
 
   // Lista de verificación previa: las marcas se guardan solo en la sesión del
   // navegador (no se envían al servidor) para no perderlas al recargar.

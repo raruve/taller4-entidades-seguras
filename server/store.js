@@ -41,6 +41,7 @@ const FICHERO_RESPUESTAS = path.join(DATA_DIR, 'respuestas.json');
 const FICHERO_CONFIG = path.join(DATA_DIR, 'config.json');
 const FICHERO_AGREGADOS = path.join(DATA_DIR, 'agregados.json');
 const FICHERO_AUDITORIA = path.join(DATA_DIR, 'auditoria.log');
+const FICHERO_INICIO = path.join(DATA_DIR, 'inicio.json');
 
 const CODIGOS_TEXTO = 600; // caracteres máximos por respuesta libre
 const MAX_PARTICIPANTES = 5000;
@@ -65,6 +66,15 @@ function escribirJson(fichero, datos) {
   fs.renameSync(temporal, fichero);
 }
 
+/** Lee el registro de auditoría completo (para la copia de seguridad). */
+function leerAuditoria() {
+  try {
+    return fs.readFileSync(FICHERO_AUDITORIA, 'utf8');
+  } catch {
+    return '';
+  }
+}
+
 function registrarAuditoria(evento, detalle = {}) {
   const linea = JSON.stringify({ fecha: new Date().toISOString(), evento, ...detalle });
   try {
@@ -86,6 +96,7 @@ export function hashSesion(codigo) {
 let respuestas = null;
 let config = null;
 let agregados = null;
+let arranque = null;
 let cola = Promise.resolve();
 
 function cargar() {
@@ -104,6 +115,32 @@ function cargar() {
   agregados = leerJson(FICHERO_AGREGADOS, { version: 1, termometro: {}, incidentes: {}, pautas: {}, semaforo: {}, prioridades: {}, retos: {}, casos: {}, votos: {}, participantes: 0 });
 
   registrarAuditoria('ARRANQUE', { sesiones: Object.keys(respuestas.sesiones).length });
+  marcarInicio();
+}
+
+/**
+ * Marca de arranque.
+ *
+ * En un alojamiento con disco efímero (por ejemplo, el plan gratuito de
+ * Render) el sistema de ficheros se pierde cuando el servicio se duerme o se
+ * reinicia. Esta marca permite saber si los datos de la sesión anterior
+ * siguen ahí o si el servicio se ha reiniciado por debajo, y avisar a la
+ * persona dinamizadora en el panel en lugar de que descubra el problema a
+ * mitad del taller.
+ */
+function marcarInicio() {
+  const anterior = leerJson(FICHERO_INICIO, null);
+  const actual = {
+    id: crypto.randomBytes(8).toString('hex'),
+    momento: new Date().toISOString(),
+    anterior: anterior ? anterior.id : null
+  };
+  escribirJson(FICHERO_INICIO, actual);
+  arranque = actual;
+  if (anterior && anterior.id !== actual.id) {
+    registrarAuditoria('REINICIO', { id: actual.id, anterior: anterior.id });
+  }
+  return actual;
 }
 
 /** Ejecuta una operación serializando las escrituras. */
@@ -411,6 +448,9 @@ function resumen() {
     // Sugerencias para preparar la votación en directo: no se muestran a los
     // participantes hasta que la persona dinamizadora las añade.
     ideasSugeridas: IDEAS_INICIALES,
+    // Identificador de arranque: si cambia entre recargas, el servicio se ha
+    // reiniciado y los datos de la sesión anterior se han perdido.
+    arranque: arranque,
     // Material de apoyo a la persona dinamizadora.
     bloques: BLOQUES,
     objetivos: OBJETIVOS,
@@ -582,6 +622,80 @@ function validarVotacion(datos) {
 export const store = {
   init() {
     cargar();
+  },
+
+  /**
+   * Copia de seguridad completa de la sesión.
+   *
+   * En un alojamiento sin disco persistente (plan gratuito) los datos se
+   * pierden cuando el servicio se duerme. Esta copia permite guardarlos en
+   * el ordenador de la persona dinamizadora y restaurarlos si hace falta.
+   * La genera y la restaura solo quien tiene la contraseña del panel.
+   */
+  exportarCopia() {
+    return {
+      formato: 'taller4-copia',
+      version: 1,
+      creado: new Date().toISOString(),
+      arranque: arranque,
+      respuestas: respuestas,
+      config: config,
+      agregados: agregados,
+      auditoria: leerAuditoria()
+    };
+  },
+
+  restaurarCopia(copia) {
+    if (!copia || copia.formato !== 'taller4-copia') {
+      throw new Error('El fichero no es una copia de la app del Taller 4.');
+    }
+    if (!copia.respuestas || !copia.config || !copia.agregados) {
+      throw new Error('La copia está incompleta.');
+    }
+    return enCola(async () => {
+      respuestas = copia.respuestas;
+      if (!respuestas.sesiones) respuestas.sesiones = {};
+      if (!respuestas.moderacion) respuestas.moderacion = {};
+      config = copia.config;
+      agregados = copia.agregados;
+      escribirJson(FICHERO_RESPUESTAS, respuestas);
+      escribirJson(FICHERO_CONFIG, config);
+      escribirJson(FICHERO_AGREGADOS, agregados);
+      if (copia.auditoria) {
+        // Se reescribe el registro ordenando por fecha: así el histórico
+        // restaurado queda en su sitio y no descoloca la lectura.
+        const lineas = [
+          ...leerAuditoria().split('\n').filter(Boolean),
+          ...copia.auditoria.split('\n').filter(Boolean)
+        ].sort((a, b) => {
+          const fa = (() => {
+            try {
+              return JSON.parse(a).fecha || '';
+            } catch {
+              return '';
+            }
+          })();
+          const fb = (() => {
+            try {
+              return JSON.parse(b).fecha || '';
+            } catch {
+              return '';
+            }
+          })();
+          return fa < fb ? -1 : fa > fb ? 1 : 0;
+        });
+        fs.writeFileSync(FICHERO_AUDITORIA, lineas.join('\n') + '\n', { mode: 0o640 });
+      }
+      registrarAuditoria('RESTAURACION', {
+        sesiones: Object.keys(respuestas.sesiones).length,
+        origen: copia.creado || 'desconocido'
+      });
+      return {
+        sesiones: Object.keys(respuestas.sesiones).length,
+        mesas: (config.mesas || []).length,
+        ideas: (config.ideas || []).length
+      };
+    });
   },
   get estado() {
     return {

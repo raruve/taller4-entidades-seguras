@@ -1,16 +1,40 @@
-# Despliegue en Render (https://render.com) a partir de este repositorio.
+# =============================================================================
+#  Despliegue en Render (https://render.com) a partir de este repositorio.
 #
 #   1. Sube el código a Git.
 #   2. En Render: New → Blueprint → apunta al repositorio.
 #   3. Rellena ADMIN_PASSWORD en el panel de variables de entorno.
 #
-# Alternativa manual: New → Web Service (Render detecta el Dockerfile).
+#  Alternativa manual: New → Web Service (Render detecta el Dockerfile).
+#
+#  ----------------------------------------------------------------------------
+#  AVISO SOBRE EL PLAN FREE
+#
+#  El plan gratuito tiene dos limitaciones que afectan a esta app:
+#
+#  1. El servicio se duerme tras 15 minutos sin tráfico y tarda ~1 minuto en
+#     despertar. Antes del taller, abre la URL 10 minutos antes.
+#  2. NO admite disco persistente: todo lo que haya en data/ (respuestas,
+#     mesas, ideas, agregados y auditoría) se pierde cuando el servicio se
+#     duerme o se reinicia.
+#
+#  Mitigaciones ya incorporadas en la app:
+#    · El panel avisa si detecta que el servicio se ha reiniciado.
+#    · Desde «Descargas y privacidad» se descarga una copia de seguridad de
+#      la sesión y se puede restaurar.
+#    · El panel refresca solo cada 15 s, lo que mantiene el servicio despierto
+#      mientras la persona dinamizadora lo tiene abierto.
+#
+#  Si necesitas que los datos sobrevivan sin depender de una copia manual,
+#  usa el plan de pago: el disco persistente solo está disponible en planes
+#  de pago, y entonces basta con descomentar el bloque «disk» de abajo.
+# =============================================================================
 
 services:
   - type: web
     name: taller4-app
     runtime: docker
-    plan: starter
+    plan: free
     healthCheckPath: /api/config
     envVars:
       - key: ADMIN_PASSWORD
@@ -31,7 +55,14 @@ services:
         value: "Pérez-Llorca"
       - key: CONTACTO
         value: "protecciondatos@perezllorca.com"
-    disk:
-      name: datos
-      mountPath: /app/data
-      sizeGB: 1
+      - key: ENTIDAD_ALOJAMIENTO
+        value: "Render (proveedor de alojamiento de la app, encargado, art. 28 RGPD)"
+      - key: DESTINATARIO_EXTERNO
+        value: "Fundación Fresno"
+
+    # Descomenta este bloque solo con un plan de pago: en el plan gratuito
+    # Render no admite disco persistente.
+    # disk:
+    #   name: datos
+    #   mountPath: /app/data
+    #   sizeGB: 1

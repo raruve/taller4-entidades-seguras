@@ -436,6 +436,38 @@ async function admin(req, res, ruta, url) {
     return;
   }
 
+  // Copia de seguridad completa de la sesión. Necesaria cuando el servicio
+  // se aloja sin disco persistente (plan gratuito): al dormirse, el sistema
+  // de ficheros se borra y con él las respuestas y los agregados.
+  if (sub === 'copia' && metodo === 'GET') {
+    const copia = store.exportarCopia();
+    responderTexto(
+      res,
+      JSON.stringify(copia, null, 2),
+      'application/json; charset=utf-8',
+      'taller4-copia-de-seguridad.json'
+    );
+    return;
+  }
+
+  if (sub === 'copia' && metodo === 'POST') {
+    let copia;
+    try {
+      // Una copia completa puede pesar bastante más que una respuesta normal.
+      copia = await leerCuerpo(req, 16 * 1024 * 1024);
+    } catch (error) {
+      responderJson(res, { error: error.message }, error.status || 400);
+      return;
+    }
+    try {
+      const resultado = await store.restaurarCopia(copia);
+      responderJson(res, { ok: true, ...resultado });
+    } catch (error) {
+      responderJson(res, { error: error.message }, 400);
+    }
+    return;
+  }
+
   if (sub === 'exportar/fresno.csv' && metodo === 'GET') {
     const resumen = store.resumen();
     responderTexto(res, csvAgregados(resumen), 'text/csv; charset=utf-8', 'taller4-resultados-agregados.csv');

@@ -71,6 +71,9 @@ en la que se borrarán los datos brutos.
 - Exportaciones para la Red Solidaria (CSV y JSON).
 - Código QR de acceso, cartela A4 imprimible, registro de auditoría y borrado
   manual.
+- **Copia de seguridad de la sesión** (descargar y restaurar). Imprescindible
+  si el alojamiento no tiene disco persistente: el panel avisa además cuando
+  detecta que el servicio se ha reiniciado y se han perdido los datos.
 - **Antes del taller**: lista de puntos a verificar, objetivos y resultados
   esperados.
 
