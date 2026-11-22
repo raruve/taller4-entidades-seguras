@@ -15,7 +15,8 @@ dependencias: la app es Node.js puro y sirve sus propios recursos.
 https://taller4-app.onrender.com
 ```
 
-Panel de dinamización en `/admin`, cartel A4 en `/cartela`, aviso legal en
+Panel de dinamización en `/admin`, panel del ponente para proyectar los
+resultados en directo en `/panel`, cartel A4 en `/cartela`, aviso legal en
 `/legal`. Alojada en Render (plan gratuito, Fráncfort) con el repositorio en
 `github.com/raruve/taller4-entidades-seguras`. Ver `DEPLOY.md` para el resto de
 opciones de publicación y para las particularidades del plan gratuito.
@@ -130,11 +131,13 @@ app/
 ├── public/
 │   ├── index.html    app de participantes
 │   ├── admin.html    panel de dinamización
+│   ├── panel.html    panel del ponente (vista para proyectar)
 │   ├── imprimir.html autodiagnóstico imprimible
 │   ├── cartel.html   cartela A4 con el QR
 │   ├── legal.html    información del art. 13 RGPD
 │   ├── app.js        lógica de la app de participantes
 │   ├── admin.js      lógica del panel
+│   ├── panel.js      lógica del panel del ponente
 │   └── styles.css    sistema visual (paleta «PLL 2024»)
 ├── test/
 │   ├── qr.test.js    verificación del codificador de QR

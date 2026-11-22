@@ -619,6 +619,50 @@ function validarVotacion(datos) {
  * API pública del almacén
  * ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ *
+ * Panel del ponente
+ * ------------------------------------------------------------------ */
+
+/**
+ * Resumen para el panel del ponente.
+ *
+ * Es la vista que se proyecta en la sala, así que solo lleva datos agregados:
+ * nunca el texto libre de los participantes (que antes de moderarse no sale de
+ * la app) ni la guía de resolución de los casos. Los recuentos sí son los
+ * reales, sin supresión de celdas pequeñas: en la sala hace falta ver lo que
+ * está contestando el público.
+ */
+function resumenPanel() {
+  const r = resumen();
+  const casos = {};
+  for (const [id, c] of Object.entries(r.casos)) {
+    const mesas = {};
+    for (const [alias, m] of Object.entries(c.mesas)) mesas[alias] = m.respuestas;
+    casos[id] = { titulo: c.titulo, respuestas: c.respuestas, mesas };
+  }
+
+  const terminados = Object.values(respuestas.sesiones).filter((s) => s.termometro).length;
+
+  return {
+    generado: r.generado,
+    participantes: r.participantes,
+    sesionesRegistradas: r.sesionesRegistradas,
+    terminadosTermometro: terminados,
+    termometro: r.termometro,
+    incidentes: r.incidentes,
+    pautas: r.pautas,
+    semaforo: r.semaforo,
+    medidas: SEMAFORO.map((m) => ({ n: m.n, medida: m.medida })),
+    prioridades: r.prioridades,
+    retos: r.retos,
+    casos,
+    ideas: r.ideas.map((i) => ({ id: i.id, texto: i.texto, categoria: i.categoria, votos: i.votos })),
+    votacionAbierta: r.votacionAbierta,
+    textosPendientes: r.textosPendientes,
+    conservacion: r.conservacion
+  };
+}
+
 export const store = {
   init() {
     cargar();
@@ -769,6 +813,7 @@ export const store = {
     });
   },
   resumen,
+  resumenPanel,
   moderar,
   listarMesas,
   crearMesa,

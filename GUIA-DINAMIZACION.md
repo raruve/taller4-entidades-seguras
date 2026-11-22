@@ -17,16 +17,38 @@ programar.
 | **Poner la contraseña** | Define `ADMIN_PASSWORD` antes de arrancar. Si no la defines, el servidor genera una y la muestra en consola y en `data/admin-password.txt`. |
 | **Comprobar la URL** | `PUBLIC_URL` debe ser la dirección **pública** por la que entrarán los participantes. Si el wifi de invitados no llega al servidor, hay que publicarla por internet (ver `DEPLOY.md`). |
 | **Probar el QR** | En `/admin` → «Descargas y privacidad» → «Abrir la cartela imprimible (A4)». Proyecta la cartela o el QR suelto. |
+| **Abrir el panel del ponente** | En `/admin` → «Resultados en directo» → «Abrir el panel del ponente». Se abre en otra pestaña, con los resultados en grande para proyectar en la sala. |
 | **Probar con un móvil** | Escanea el QR con el móvil y recorre los cinco pasos. Es la prueba de fuego: si a ti te funciona, a ellos también. |
 | **Copias de respaldo** | Imprime 4 copias del semáforo y de los cuatro escenarios (por si falla la conexión). |
 | **Wifi** | Confirmar con el centro que la sala tiene wifi para invitados. Es lo único que puede hacer fracasar la dinámica. |
 
 La app del taller está publicada en **https://taller4-app.onrender.com**
-(cartel A4 en `/cartela`, panel en `/admin`).
+(cartel A4 en `/cartela`, panel de dinamización en `/admin`, panel del ponente
+en `/panel`).
 
 > **Consejo:** deja el panel de dinamización abierto en una segunda pestaña o en
 > un portátil. La app de participantes va en el proyector; el panel, en tu
 > pantalla de control.
+
+---
+
+## El panel del ponente (`/panel`)
+
+Es la vista que se proyecta en la sala: los resultados van apareciendo solos,
+sin que nadie tenga que recargar nada.
+
+| | |
+|---|---|
+| **Dónde** | `https://taller4-app.onrender.com/panel` (pide la contraseña del taller) |
+| **Cómo se abre** | Desde `/admin` → «Resultados en directo» → «Abrir el panel del ponente». También se puede abrir a mano en otra pestaña. |
+| **Qué muestra** | Participantes que han respondido · termómetro · las 10 medidas del semáforo con el color de cada respuesta · respuestas por caso y por mesa · retos por categoría · ideas fuerza con sus votos. |
+| **Cómo se actualiza** | Solo, cada 5 segundos. Arriba a la derecha se ve la hora de la última lectura. |
+| **Pantalla completa** | Botón «Pantalla completa» (o `F11`). |
+| **Qué NO muestra** | El texto libre de los participantes: ese texto se revisa primero en «Revisión de textos» y no sale de la app hasta que se aprueba. |
+
+Detalle práctico: en cada medida del semáforo se ven tres números con su
+color (verde, ámbar, rojo). El color de la respuesta mayoritaria va relleno; si
+hay empate, los tres empatados quedan marcados con el borde blanco.
 
 ---
 
@@ -47,9 +69,11 @@ empezar**: la app se puede abrir en cualquier momento de la sesión.
 ### 1 · Termómetro digital (10 min)
 
 1. Proyecta la **presentación** (diapositiva 3).
-2. En el panel, vigila el contador **Participantes** en «Resultados en directo».
-3. Cuando unas 20-30 personas hayan respondido, cambia a la **vista proyector**
-   (pestaña «Vista proyector» del panel) y comenta los resultados en voz alta:
+2. Abre el **panel del ponente** (`/panel`) en el proyector: los resultados
+   aparecen solos, sin recargar. En tu pantalla de control, en `/admin`, vigila
+   el contador **Participantes** de «Resultados en directo».
+3. Cuando unas 20-30 personas hayan respondido, comenta los resultados en voz
+   alta desde el panel del ponente:
    - ¿Cuántas entidades usan ya IA? ¿Con herramientas de la entidad o las suyas?
    - ¿A cuántas les ha pasado algo (phishing, fraude, pérdida de información)?
    - ¿Quién tiene ya una pauta escrita?
@@ -122,10 +146,10 @@ Para cada caso:
    **tres prioridades**.
 2. Con el botón **«Ver autodiagnóstico»** cada quien puede imprimir o guardar
    su hoja en PDF y llevársela. Es lo que se llevan de la sesión.
-3. En el panel, la tarjeta «Semáforo · 10 medidas» muestra la situación
-   mayoritaria de cada medida. Es un buen punto para comentar en alto: *«La
-   medida que más os cuesta es la 4 (pagos). Es también la que más se repite en
-   el sector.»*
+3. En el **panel del ponente**, el bloque «Semáforo · las 10 medidas» muestra la
+   respuesta mayoritaria de cada medida y cuántas personas la han elegido como
+   prioridad (★). Es un buen punto para comentar en alto: *«La medida que más
+   os cuesta es la 4 (pagos). Es también la que más se repite en el sector.»*
 
 ---
 

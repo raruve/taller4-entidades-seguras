@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Panel del ponente · Taller 4</title>
+    <meta
+      name="description"
+      content="Resultados en directo del Taller 4 de la Red Solidaria Santander para la persona que dinamiza la sesión."
+    />
+    <meta name="theme-color" content="#002033" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/assets/icono.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/panel.css" />
+  </head>
+  <body class="panel-ponente">
+    <!-- Acceso: se pide la contraseña del taller -->
+    <div class="acceso" id="acceso" hidden>
+      <form class="acceso-tarjeta" id="form-acceso">
+        <img src="/assets/pll-logo-blanco.svg" alt="Pérez-Llorca" class="acceso-logo" />
+        <div class="kicker">Taller 4 · Red Solidaria Santander</div>
+        <h1>Panel del ponente</h1>
+        <p class="acceso-nota">
+          Vista para proyectar en la sala. Necesita la contraseña del taller.
+        </p>
+        <label class="acceso-campo">
+          <span>Contraseña</span>
+          <input type="password" id="password" autocomplete="current-password" placeholder="Contraseña del taller" />
+        </label>
+        <button type="submit" class="boton boton-coral">Entrar al panel</button>
+        <div id="aviso-acceso"></div>
+        <a class="acceso-volver" href="/admin">Ir al panel de dinamización</a>
+      </form>
+    </div>
+
+    <!-- Panel -->
+    <div id="panel" hidden>
+      <header class="panel-cab">
+        <div class="panel-cab-izq">
+          <div class="kicker">Taller 4 · Red Solidaria Santander</div>
+          <h1>Entidades seguras en un mundo digital</h1>
+          <p class="panel-sub">Resultados en directo de las respuestas del público</p>
+        </div>
+        <div class="panel-cab-der">
+          <div class="vivo"><span class="punto"></span> EN VIVO</div>
+          <div class="contador">
+            <strong id="participantes">0</strong>
+            <span>participantes<br />han respondido</span>
+          </div>
+          <div class="panel-acciones">
+            <span id="ultima-lectura" class="nota"></span>
+            <button type="button" id="btn-pantalla" class="boton boton-linea">Pantalla completa</button>
+            <a href="/admin" class="panel-enlace">Panel de dinamización</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="panel-cuerpo" id="contenido">
+        <p class="nota">Cargando resultados…</p>
+      </main>
+
+      <footer class="panel-pie">
+        <span id="panel-conservacion"></span>
+        <span class="panel-pie-nota">Solo datos agregados · el texto libre se revisa antes de compartirse</span>
+      </footer>
+    </div>
+
+    <script type="module" src="/panel.js"></script>
+  </body>
+</html>

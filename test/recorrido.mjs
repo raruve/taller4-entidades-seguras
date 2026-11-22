@@ -272,6 +272,57 @@ comprobar(true, 'El panel entra con la contraseña correcta');
 comprobar((await admin.locator('.cifra').count()) === 4, 'Muestra las cifras en directo');
 await captura(admin, 'admin-resultados');
 
+console.log('\n▸ Panel del ponente (vista para proyectar)');
+const panel = await contexto.newPage();
+await panel.goto(`${BASE}/panel`, { waitUntil: 'networkidle' });
+await panel.waitForSelector('#form-acceso');
+comprobar(true, 'El panel del ponente pide la contraseña');
+await panel.fill('#password', 'incorrecta');
+await panel.click('#form-acceso button[type="submit"]');
+await panel.waitForSelector('#aviso-acceso .mensaje-error');
+comprobar(true, 'El panel del ponente rechaza una contraseña incorrecta');
+await panel.fill('#password', PASSWORD_ADMIN);
+await panel.click('#form-acceso button[type="submit"]');
+await panel.waitForSelector('.bloque-panel', { timeout: 10000 });
+comprobar((await panel.locator('.bloque-panel').count()) >= 5, 'El panel del ponente muestra los bloques de resultados');
+comprobar((await panel.locator('.medida-panel').count()) === 10, 'El semáforo muestra las diez medidas');
+comprobar(
+  (await panel.locator('.medida-panel .pildora.verde').count()) === 10,
+  'Cada medida muestra el color de las tres respuestas'
+);
+comprobar(
+  (await panel.locator('#participantes').innerText()).trim() !== '0',
+  'El panel indica cuántas personas han respondido'
+);
+comprobar(
+  (await panel.locator('.caso-panel').count()) === 4,
+  'El panel muestra los cuatro casos con sus respuestas'
+);
+// Lo que se proyecta en la sala no puede incluir el texto libre de los
+// participantes: ese texto se revisa antes de compartirlo.
+const textoProyectado = await panel.locator('#contenido').innerText();
+comprobar(
+  !textoProyectado.includes('El riesgo es que el informe acabe') &&
+    !textoProyectado.includes('Necesitamos formación práctica en IA'),
+  'El panel del ponente no muestra el texto libre de los participantes'
+);
+await captura(panel, 'panel-ponente');
+
+// El botón del panel de dinamización abre el panel del ponente en otra
+// pestaña, ya con la sesión iniciada.
+const [panelDesdeAdmin] = await Promise.all([
+  contexto.waitForEvent('page'),
+  admin.click('#btn-abrir-panel')
+]);
+await panelDesdeAdmin.waitForSelector('.bloque-panel', { timeout: 10000 });
+comprobar(true, 'El botón del panel de dinamización abre el panel del ponente');
+comprobar(
+  (await panelDesdeAdmin.locator('#form-acceso').isVisible()) === false,
+  'El panel abierto desde el botón no pide la contraseña otra vez'
+);
+await panelDesdeAdmin.close();
+await panel.close();
+
 console.log('\n▸ Guion «Lo esencial en 15 minutos» y puntos a verificar');
 await admin.click('[data-pestana="guion"]');
 await admin.waitForSelector('.bloque-guion', { timeout: 8000 });

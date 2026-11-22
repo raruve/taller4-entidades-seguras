@@ -324,6 +324,11 @@ function pestanaResultados() {
       <div class="cifra"><div class="valor">${(r.ideas || []).length}</div><div class="etiqueta">Ideas para votar</div></div>
     </div>
 
+    <div class="acciones-panel">
+      <button type="button" class="boton boton-primario" id="btn-abrir-panel">Abrir el panel del ponente</button>
+      <span class="nota">Se abre en otra pestaña, con los resultados en grande para proyectar en la sala. Solo muestra datos agregados: el texto libre no sale hasta que se revisa.</span>
+    </div>
+
     <div class="admin-rejilla">
       <section class="tarjeta">
         <div class="kicker">Termómetro · uso de IA</div>
@@ -882,6 +887,16 @@ function conectarPestana() {
       } finally {
         ficheroCopia.value = '';
       }
+    });
+  }
+
+  // Panel del ponente: se abre en otra pestaña para proyectarlo en la sala.
+  // El token va en el fragmento de la URL, que nunca viaja al servidor.
+  const abrirPanel = $('#btn-abrir-panel');
+  if (abrirPanel) {
+    abrirPanel.addEventListener('click', () => {
+      const url = `/panel#t=${encodeURIComponent(estado.token || '')}`;
+      window.open(url, '_blank', 'noopener');
     });
   }
 

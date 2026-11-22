@@ -15,6 +15,7 @@ https://taller4-app.onrender.com
 | | |
 |---|---|
 | Panel de dinamización | `https://taller4-app.onrender.com/admin` |
+| Panel del ponente (proyector) | `https://taller4-app.onrender.com/panel` |
 | Cartel A4 con QR | `https://taller4-app.onrender.com/cartela` |
 | Hoja imprimible | `https://taller4-app.onrender.com/imprimir` |
 | Aviso legal (art. 13) | `https://taller4-app.onrender.com/legal` |

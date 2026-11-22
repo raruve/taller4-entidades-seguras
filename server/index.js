@@ -373,6 +373,11 @@ async function admin(req, res, ruta, url) {
     return;
   }
 
+  if (sub === 'panel' && metodo === 'GET') {
+    responderJson(res, store.resumenPanel());
+    return;
+  }
+
   if (sub === 'mesas') {
     if (metodo === 'GET') {
       responderJson(res, { mesas: store.listarMesas() });
@@ -536,6 +541,7 @@ async function estaticos(req, res, ruta) {
   let relativo;
   if (ruta === '/' || ruta === '/app') relativo = 'index.html';
   else if (ruta === '/admin') relativo = 'admin.html';
+  else if (ruta === '/panel') relativo = 'panel.html';
   else if (ruta === '/imprimir') relativo = 'imprimir.html';
   else if (ruta === '/cartela') relativo = 'cartela.html';
   else if (ruta === '/legal') relativo = 'legal.html';

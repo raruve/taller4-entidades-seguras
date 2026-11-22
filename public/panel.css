@@ -1,0 +1,470 @@
+/* ==================================================================
+   Panel del ponente · vista para proyectar en la sala
+   ================================================================== */
+
+body.panel-ponente {
+  background: var(--azul-oscuro);
+  color: var(--blanco);
+  min-height: 100vh;
+  padding: 0;
+}
+
+.panel-ponente .kicker {
+  color: var(--azul-claro);
+}
+
+.panel-ponente .nota {
+  color: #b3ccdb;
+}
+
+/* --- Acceso --- */
+
+.acceso {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.acceso-tarjeta {
+  width: 100%;
+  max-width: 26rem;
+  background: var(--papel);
+  color: var(--texto);
+  border-radius: var(--radio-grande);
+  padding: 1.6rem;
+  box-shadow: var(--sombra);
+  text-align: left;
+}
+
+.acceso-logo {
+  height: 1.3rem;
+  width: auto;
+  margin-bottom: 1rem;
+}
+
+.acceso-tarjeta h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.acceso-nota {
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+  margin-bottom: 1rem;
+}
+
+.acceso-campo {
+  display: block;
+  margin-bottom: 0.9rem;
+}
+
+.acceso-campo span {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gris);
+  margin-bottom: 0.3rem;
+}
+
+.acceso-campo input {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  font-family: inherit;
+  font-size: 1rem;
+  background: var(--blanco);
+  color: var(--texto);
+}
+
+.acceso-volver {
+  display: inline-block;
+  margin-top: 0.9rem;
+  font-size: 0.82rem;
+  color: var(--azul);
+}
+
+/* --- Cabecera --- */
+
+.panel-cab {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1.4rem 1.6rem 1.1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.panel-cab h1 {
+  font-size: 1.5rem;
+  color: var(--blanco);
+  margin-bottom: 0.15rem;
+}
+
+.panel-sub {
+  font-size: 0.9rem;
+  color: #b3ccdb;
+}
+
+.panel-cab-der {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.vivo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--coral);
+  border: 1px solid var(--coral);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+}
+
+.vivo .punto {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--coral);
+  animation: latido 2s ease-in-out infinite;
+}
+
+@keyframes latido {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.contador {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.contador strong {
+  font-size: 2.6rem;
+  line-height: 1;
+  color: var(--blanco);
+  font-variant-numeric: tabular-nums;
+}
+
+.contador span {
+  font-size: 0.78rem;
+  color: #b3ccdb;
+  line-height: 1.25;
+}
+
+.panel-acciones {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+}
+
+.panel-acciones .boton {
+  width: auto;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.78rem;
+  background: transparent;
+  color: var(--blanco);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.panel-acciones .boton:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.panel-enlace {
+  color: var(--azul-claro);
+}
+
+/* --- Cuerpo --- */
+
+.panel-cuerpo {
+  padding: 1.2rem 1.6rem 1.6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.bloque-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radio-grande);
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.bloque-panel.ancho {
+  grid-column: 1 / -1;
+}
+
+.bloque-panel h2 {
+  font-size: 1.05rem;
+  color: var(--blanco);
+  margin-bottom: 0.2rem;
+}
+
+.bloque-panel .sub {
+  font-size: 0.78rem;
+  color: #b3ccdb;
+  margin-bottom: 0.8rem;
+}
+
+.bloque-panel .vacio {
+  font-size: 0.85rem;
+  color: #8fb0c4;
+  font-style: italic;
+}
+
+/* --- Barras --- */
+
+.barra-panel {
+  margin-bottom: 0.55rem;
+}
+
+.barra-panel .cabeza {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.2rem;
+}
+
+.barra-panel .cabeza span:first-child {
+  color: var(--blanco);
+}
+
+.barra-panel .cabeza .valor {
+  font-weight: 700;
+  color: var(--blanco);
+  font-variant-numeric: tabular-nums;
+}
+
+.barra-panel .pista {
+  height: 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.barra-panel .pista i {
+  display: block;
+  height: 100%;
+  background: var(--coral);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* --- Semáforo --- */
+
+.semaforo-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(26rem, 1fr));
+  gap: 0.5rem 1.4rem;
+}
+
+.medida-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.medida-panel .num {
+  flex: 0 0 auto;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: var(--blanco);
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.medida-panel .texto {
+  flex: 1 1 14rem;
+  font-size: 0.88rem;
+  color: var(--blanco);
+  line-height: 1.25;
+}
+
+.pildoras {
+  display: flex;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+}
+
+.pildora {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #b3ccdb;
+  font-variant-numeric: tabular-nums;
+}
+
+/* El punto conserva siempre el color: desde el fondo de la sala hay que
+   distinguir el verde del rojo sin leer la leyenda. */
+.pildora .punto {
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.pildora.verde .punto {
+  border-color: #2f9e6b;
+}
+
+.pildora.ambar .punto {
+  border-color: var(--ambar);
+}
+
+.pildora.rojo .punto {
+  border-color: var(--coral);
+}
+
+/* La respuesta mayoritaria va rellena */
+.pildora.principal {
+  color: var(--blanco);
+  border-color: transparent;
+}
+
+.pildora.principal .punto {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: transparent;
+}
+
+.pildora.principal.verde {
+  background: #2f9e6b;
+}
+
+.pildora.principal.ambar {
+  background: var(--ambar);
+}
+
+.pildora.principal.rojo {
+  background: var(--coral);
+}
+
+/* Empate: ninguna respuesta domina, así que se marcan todas las empatadas */
+.pildora.empate {
+  color: var(--blanco);
+  border-color: rgba(255, 255, 255, 0.75);
+}
+
+.prioridad {
+  color: var(--ambar);
+  font-weight: 700;
+  white-space: nowrap;
+  margin-left: 0.2rem;
+}
+
+/* --- Casos --- */
+
+.casos-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.6rem;
+}
+
+.caso-panel {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radio);
+  padding: 0.6rem 0.7rem;
+}
+
+.caso-panel .titulo {
+  font-size: 0.85rem;
+  color: var(--blanco);
+  margin-bottom: 0.3rem;
+  line-height: 1.25;
+}
+
+.caso-panel .num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--coral);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.caso-panel .detalle {
+  font-size: 0.75rem;
+  color: #b3ccdb;
+  margin-top: 0.25rem;
+  line-height: 1.35;
+}
+
+/* --- Ideas --- */
+
+.idea-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.8rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.85rem;
+  color: var(--blanco);
+}
+
+.idea-panel .votos {
+  flex: 0 0 auto;
+  font-weight: 700;
+  color: var(--coral);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Pie --- */
+
+.panel-pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: space-between;
+  padding: 0.8rem 1.6rem 1.4rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.75rem;
+  color: #8fb0c4;
+}
+
+@media (min-width: 1100px) {
+  .panel-cab h1 {
+    font-size: 1.9rem;
+  }
+
+  .contador strong {
+    font-size: 3.4rem;
+  }
+
+  .medida-panel .texto {
+    font-size: 0.95rem;
+  }
+}

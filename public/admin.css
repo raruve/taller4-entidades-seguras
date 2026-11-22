@@ -255,6 +255,31 @@ body.admin {
   color: var(--blanco);
 }
 
+/* Botón para abrir el panel del ponente */
+.acciones-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 0.9rem;
+  margin: 0 0 0.9rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--azul-claro);
+  border-radius: var(--radio-grande);
+}
+
+.acciones-panel .boton {
+  width: auto;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+}
+
+.acciones-panel .nota {
+  flex: 1 1 16rem;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+  margin: 0;
+}
+
 /* Vista proyector */
 .proyector {
   background: var(--azul-oscuro);

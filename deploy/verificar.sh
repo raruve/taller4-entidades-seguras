@@ -122,6 +122,14 @@ CODIGO=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$URL/admin")
 comprobar "la pantalla de acceso al panel carga" \
   "$([ "$CODIGO" = "200" ] && echo 0 || echo 1)" "código $CODIGO"
 
+CODIGO=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$URL/panel")
+comprobar "la pantalla de acceso del panel del ponente carga" \
+  "$([ "$CODIGO" = "200" ] && echo 0 || echo 1)" "código $CODIGO"
+
+CODIGO=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$URL/api/admin/panel")
+comprobar "sin contraseña, los datos del panel del ponente responden 401" \
+  "$([ "$CODIGO" = "401" ] && echo 0 || echo 1)" "código $CODIGO"
+
 # ---------------------------------------------------------------------------
 echo
 echo "[6] Información del art. 13 RGPD publicada"
