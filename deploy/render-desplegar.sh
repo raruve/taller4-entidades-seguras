@@ -111,7 +111,23 @@ else
 fi
 
 git branch -M main
-git push -q --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${USUARIO}/${REPO_NAME}.git" main
+if ! git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${USUARIO}/${REPO_NAME}.git" main 2>/tmp/git-push.err; then
+  rojo "GitHub ha denegado la subida (403)."
+  gris "$(sed -n '1,2p' /tmp/git-push.err | tr '\n' ' ')"
+  echo
+  rojo "Causa habitual: el token es «fine-grained» y tiene el acceso a"
+  rojo "repositorios limitado a una lista («Only select repositories»), que no"
+  rojo "incluye el repositorio recién creado. Se puede crear el repositorio"
+  rojo "pero no subir el código."
+  echo
+  rojo "Solución (no hace falta cambiar el valor del token):"
+  rojo "  1. https://github.com/settings/personal-access-tokens"
+  rojo "  2. Abre el token «Taller 4 despliegue» y pulsa Editar."
+  rojo "  3. Repository access → «All repositories»."
+  rojo "  4. Repository permissions → «Contents: Read and write»."
+  rojo "  5. Guardar. El valor del token no cambia y el cambio es inmediato."
+  exit 1
+fi
 verde "Código publicado en la rama main."
 
 # ---------------------------------------------------------------------------
