@@ -74,6 +74,30 @@ fi
 USUARIO="$GH_LOGIN"
 verde "Autenticado en GitHub como: $USUARIO"
 
+# Comprobación real de escritura: un «push en seco» autentica y pregunta a
+# GitHub por los permisos, sin subir nada. Detecta el 403 antes de crear el
+# repositorio y explica exactamente qué falta.
+if [ ! -d ".git" ]; then
+  git init -q
+  git config user.email "taller4@perezllorca.local"
+  git config user.name "Taller 4"
+  git add -A >/dev/null 2>&1 || true
+  git commit -q -m "comprobación" >/dev/null 2>&1 || true
+fi
+if ! git push --dry-run "https://x-access-token:${GITHUB_TOKEN}@github.com/${USUARIO}/${REPO_NAME}.git" main >/tmp/git-dry.err 2>&1; then
+  rojo "El token de GitHub no puede escribir en repositorios."
+  gris "$(sed -n '1,2p' /tmp/git-dry.err | tr '\n' ' ')"
+  echo
+  rojo "Abre https://github.com/settings/personal-access-tokens → tu token → Editar y comprueba:"
+  rojo "  · Repository access → «All repositories»"
+  rojo "  · Repository permissions → busca «Contents» y ponlo en «Read and write»"
+  rojo "    (es un desplegable independiente; si está en «Read-only», no puede subir)"
+  echo
+  rojo "El valor del token no cambia al editarlo, así que no hace falta pegarlo otra vez."
+  exit 1
+fi
+verde "El token tiene permiso de escritura en repositorios."
+
 PRIVADO=false
 [ "$REPO_PRIVADO" = "si" ] && PRIVADO=true
 
