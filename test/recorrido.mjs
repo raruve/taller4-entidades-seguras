@@ -32,6 +32,16 @@ async function esperarHash(page, hash, timeout = 6000) {
   throw new Error(`No se ha llegado a la vista ${hash}`);
 }
 
+/** Espera a que un selector llegue al número mínimo de elementos. */
+async function esperarConteo(page, selector, minimo, timeout = 12000) {
+  const limite = Date.now() + timeout;
+  while (Date.now() < limite) {
+    if ((await page.locator(selector).count()) >= minimo) return true;
+    await page.waitForTimeout(200);
+  }
+  return false;
+}
+
 function comprobar(condicion, mensaje) {
   if (!condicion) {
     errores.push(mensaje);
@@ -454,6 +464,7 @@ await captura(admin, 'admin-mesas');
 
 await admin.click('[data-pestana="moderacion"]');
 await admin.waitForSelector('.texto-moderar');
+await esperarConteo(admin, '.texto-moderar', 4);
 comprobar((await admin.locator('.texto-moderar').count()) >= 4, 'La revisión de textos lista los textos libres');
 await admin.click('.texto-moderar .chip[data-estado="aprobado"]');
 await admin.waitForTimeout(900);

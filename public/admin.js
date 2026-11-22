@@ -180,6 +180,10 @@ function render() {
     boton.addEventListener('click', () => {
       estado.pestana = boton.dataset.pestana;
       render();
+      // Al cambiar de pestaña se recupera el estado más reciente: durante el
+      // taller llegan respuestas en todo momento y el panel no debe mostrar
+      // datos caducados (por ejemplo, textos pendientes que aún no han salido).
+      cargar();
     });
   });
 
