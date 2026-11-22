@@ -1,0 +1,414 @@
+/**
+ * Recorrido completo de la app con un navegador real (Chromium).
+ * Comprueba las pantallas, las validaciones y el flujo de guardado, y deja
+ * capturas en /workspace/capturas.
+ *
+ *   node test/recorrido.mjs [http://localhost:3210]
+ */
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+
+const BASE = process.argv[2] || 'http://localhost:3210';
+const DIR = '/workspace/capturas';
+fs.mkdirSync(DIR, { recursive: true });
+
+const MOVIL = { width: 390, height: 844 };
+const errores = [];
+let n = 0;
+
+async function captura(page, nombre) {
+  n++;
+  const fichero = `${DIR}/${String(n).padStart(2, '0')}-${nombre}.png`;
+  await page.screenshot({ path: fichero, fullPage: true });
+  console.log(`  📸 ${fichero}`);
+}
+
+async function esperarHash(page, hash, timeout = 6000) {
+  const limite = Date.now() + timeout;
+  while (Date.now() < limite) {
+    if (page.url().includes(hash)) return true;
+    await page.waitForTimeout(150);
+  }
+  throw new Error(`No se ha llegado a la vista ${hash}`);
+}
+
+function comprobar(condicion, mensaje) {
+  if (!condicion) {
+    errores.push(mensaje);
+    console.error(`  ✗ ${mensaje}`);
+  } else {
+    console.log(`  ✓ ${mensaje}`);
+  }
+}
+
+const EXECUTABLE =
+  process.env.CHROMIUM_PATH || '/root/.cache/ms-playwright/chromium-1243/chrome-linux/chrome';
+const navegador = await chromium.launch({
+  executablePath: EXECUTABLE,
+  args: ['--no-sandbox', '--disable-dev-shm-usage']
+});
+const contexto = await navegador.newContext({
+  viewport: MOVIL,
+  deviceScaleFactor: 2,
+  locale: 'es-ES',
+  userAgent:
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+});
+const page = await contexto.newPage();
+
+const peticionesExternas = [];
+page.on('request', (req) => {
+  const url = req.url();
+  if (!url.startsWith(BASE) && !url.startsWith('data:')) peticionesExternas.push(url);
+});
+
+page.on('pageerror', (e) => errores.push(`Error de JavaScript: ${e.message}`));
+page.on('console', (msg) => {
+  if (msg.type() === 'error') errores.push(`Consola: ${msg.text()}`);
+});
+
+/* ---------------------------------------------------------------- */
+
+console.log('\n▸ Pantalla de inicio');
+await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+await page.waitForSelector('.portada');
+comprobar((await page.title()).includes('Entidades seguras'), 'El título de la pestaña es correcto');
+comprobar(await page.locator('.titulo-grande').isVisible(), 'Se muestra el título del taller');
+comprobar(await page.locator('#codigo-sesion').isVisible(), 'Se muestra el código de sesión');
+comprobar((await page.locator('.agenda li').count()) === 6, 'La agenda muestra los 6 momentos');
+await captura(page, 'inicio');
+
+console.log('\n▸ Información legal (art. 13)');
+await page.click('details.legal-detall summary');
+comprobar(await page.locator('.legal h4').first().isVisible(), 'La información legal se despliega');
+comprobar((await page.locator('.legal h4').count()) >= 8, 'La información legal tiene todas las capas');
+await captura(page, 'inicio-legal');
+
+console.log('\n▸ Termómetro digital');
+await page.click('[data-ir="termometro"]');
+await page.waitForSelector('#form-termometro');
+comprobar((await page.locator('.pregunta').count()) === 3, 'Hay tres preguntas');
+
+// Validación: no se puede enviar sin responder.
+await page.click('#form-termometro button[type="submit"]');
+comprobar(
+  await page.locator('#aviso-termometro .mensaje-error').isVisible(),
+  'Avisa si faltan preguntas por responder'
+);
+
+await page.click('input[name="q_ia"][value="Sí, cada uno las suyas"]');
+await page.click('input[name="q_incidentes"][value="Phishing o suplantación"]');
+await page.click('input[name="q_incidentes"][value="Fraude en pagos"]');
+await page.click('input[name="q_pautas"][value="Informales"]');
+await captura(page, 'termometro');
+await page.click('#form-termometro button[type="submit"]');
+await page.waitForSelector('#aviso-termometro .mensaje-ok', { timeout: 5000 });
+comprobar(true, 'El termómetro se guarda correctamente');
+await esperarHash(page, 'mesas');
+comprobar(true, 'Pasa automáticamente a los casos');
+
+console.log('\n▸ Mesas y casos');
+await page.waitForSelector('[data-mesa]');
+comprobar((await page.locator('[data-mesa]').count()) >= 4, 'Se listan las mesas abiertas');
+await page.click('[data-mesa="Mesa 1"]');
+await page.waitForSelector('#form-mesa');
+comprobar(true, 'La mesa abre el caso asignado');
+comprobar(
+  (await page.locator('.tarjeta .kicker:has-text("Caso 1")').count()) > 0,
+  'Se muestra el escenario del caso 1'
+);
+comprobar(await page.locator('.caja-aviso').first().isVisible(), 'Se muestra el aviso de no escribir datos reales');
+
+console.log('\n▸ Detector de datos personales');
+await page.fill('[data-campo="riesgo"]', 'Podéis preguntar a maria.garcia@ejemplo.org o al 612 345 678');
+await page.waitForTimeout(200);
+comprobar(
+  await page.locator('[data-alerta="riesgo"]').isVisible(),
+  'Avisa cuando el texto parece contener datos personales'
+);
+await captura(page, 'caso-datos-personales');
+
+await page.fill('[data-campo="riesgo"]', 'El riesgo es que el informe acabe en un servidor fuera de la UE.');
+await page.fill('[data-campo="hacer"]', 'Solo herramientas corporativas con contrato de encargado y sin entrenamiento.');
+await page.fill('[data-campo="necesidad"]', 'Una pauta escrita y una persona responsable de revisarla.');
+await page.waitForTimeout(200);
+comprobar(
+  await page.locator('[data-alerta="riesgo"]').isHidden(),
+  'La alerta desaparece cuando el texto es limpio'
+);
+
+// Sin marcar la casilla de revisión no deja enviar.
+await page.click('#form-mesa button[type="submit"]');
+comprobar(
+  await page.locator('#aviso-mesa .mensaje-error').isVisible(),
+  'Exige confirmar la revisión antes de enviar'
+);
+
+await page.click('#check-mesa');
+await captura(page, 'caso-relleno');
+await page.click('#form-mesa button[type="submit"]');
+await page.waitForSelector('.mensaje-clave', { timeout: 5000 });
+comprobar(true, 'Las respuestas de la mesa se guardan');
+comprobar(
+  (await page.locator('.mensaje-clave').innerText()).includes('Herramienta gratuita'),
+  'Muestra el mensaje clave del caso'
+);
+await captura(page, 'caso-guardado');
+
+console.log('\n▸ Semáforo');
+await page.click('#btn-siguiente');
+await page.waitForSelector('.medida');
+comprobar((await page.locator('.medida').count()) === 10, 'Hay diez medidas');
+await page.click('.medida:nth-of-type(1) .semaforo-boton[data-estado="verde"]');
+await page.click('.medida:nth-of-type(2) .semaforo-boton[data-estado="ambar"]');
+await page.click('.medida:nth-of-type(3) .semaforo-boton[data-estado="rojo"]');
+comprobar(
+  (await page.locator('.semaforo-boton[aria-pressed="true"]').count()) === 3,
+  'Se registran las marcas del semáforo'
+);
+
+// Tres prioridades como máximo.
+await page.click('input[data-prioridad="2"]');
+await page.click('input[data-prioridad="3"]');
+await page.click('input[data-prioridad="5"]');
+comprobar(
+  (await page.locator('input[data-prioridad]:checked').count()) === 3,
+  'Se pueden elegir tres prioridades'
+);
+await page.click('input[data-prioridad="7"]');
+await page.waitForTimeout(200);
+comprobar(
+  (await page.locator('input[data-prioridad]:checked').count()) === 3,
+  'No permite una cuarta prioridad'
+);
+comprobar(
+  await page.locator('#aviso-semaforo .mensaje-error').isVisible(),
+  'Avisa del límite de tres prioridades'
+);
+await captura(page, 'semaforo');
+await page.click('#btn-guardar-semaforo');
+await page.waitForSelector('#aviso-semaforo .mensaje-ok', { timeout: 5000 });
+comprobar(true, 'El autodiagnóstico se guarda');
+
+console.log('\n▸ Hoja imprimible del autodiagnóstico');
+const [hoja] = await Promise.all([
+  page.waitForEvent('popup'),
+  page.click('#btn-descargar')
+]);
+await hoja.waitForLoadState('domcontentloaded');
+await hoja.waitForSelector('.tabla-impresion', { timeout: 10000 });
+comprobar((await hoja.locator('.tabla-impresion tbody tr').count()) === 10, 'La hoja lista las diez medidas');
+comprobar((await hoja.locator('.marca-estado.verde').count()) > 0, 'Marca la situación elegida');
+await hoja.screenshot({ path: `${DIR}/autodiagnostico-imprimible.png`, fullPage: true });
+console.log(`  📸 ${DIR}/autodiagnostico-imprimible.png`);
+await hoja.close();
+
+console.log('\n▸ Panel de dinamización · preparación de la votación');
+const admin = await contexto.newPage();
+await admin.goto(`${BASE}/admin`, { waitUntil: 'networkidle' });
+await admin.waitForSelector('#form-login');
+await captura(admin, 'admin-acceso');
+await admin.fill('#password', 'incorrecta');
+await admin.click('#form-login button[type="submit"]');
+await admin.waitForSelector('#aviso-login .mensaje-error');
+comprobar(true, 'El panel rechaza una contraseña incorrecta');
+await admin.fill('#password', 'pruebas123');
+await admin.click('#form-login button[type="submit"]');
+await admin.waitForSelector('.cifras', { timeout: 8000 });
+comprobar(true, 'El panel entra con la contraseña correcta');
+comprobar((await admin.locator('.cifra').count()) === 4, 'Muestra las cifras en directo');
+await captura(admin, 'admin-resultados');
+
+console.log('\n▸ Guion «Lo esencial en 15 minutos» y puntos a verificar');
+await admin.click('[data-pestana="guion"]');
+await admin.waitForSelector('.bloque-guion', { timeout: 8000 });
+comprobar(
+  (await admin.locator('.bloque-guion').count()) === 4,
+  'El guion tiene los cuatro bloques (A-D)'
+);
+const letras = await admin.locator('.bloque-letra').allInnerTexts();
+comprobar(
+  letras.join('') === 'ABCD',
+  'Los bloques del guion están en orden (A, B, C y D)'
+);
+comprobar(
+  (await admin.locator('.bloque-mensaje').count()) === 4,
+  'Cada bloque lleva su mensaje para la diapositiva'
+);
+comprobar(
+  (await admin.locator('.nota-ponente').count()) === 4,
+  'Cada bloque guarda la nota del ponente con la base normativa'
+);
+comprobar(
+  (await admin.locator('.ia-fila').count()) === 3,
+  'El bloque de IA incluye el semáforo verde/ámbar/rojo'
+);
+const notaOculta = await admin.locator('.nota-ponente p').first().isVisible();
+comprobar(!notaOculta, 'La nota del ponente no se proyecta hasta abrirla');
+await admin.click('.nota-ponente summary');
+await admin.waitForTimeout(250);
+comprobar(
+  await admin.locator('.nota-ponente p').first().isVisible(),
+  'La nota del ponente se abre al pulsar'
+);
+await captura(admin, 'admin-guion');
+await admin.click('.nota-ponente summary');
+await admin.waitForTimeout(250);
+await captura(admin, 'admin-guion-nota');
+await admin.click('.nota-ponente summary');
+
+await admin.click('[data-pestana="checklist"]');
+await admin.waitForSelector('.check-verificacion', { timeout: 8000 });
+comprobar(
+  (await admin.locator('.check-verificacion').count()) >= 4,
+  'La lista de puntos a verificar está completa'
+);
+comprobar(
+  (await admin.locator('.lista-simple li').count()) >= 7,
+  'Muestra los objetivos y los resultados esperados'
+);
+await admin.click('.check-verificacion input');
+await admin.waitForTimeout(250);
+comprobar(
+  await admin.locator('.check-verificacion input').first().isChecked(),
+  'Se puede marcar un punto como verificado'
+);
+await captura(admin, 'admin-checklist');
+
+console.log('\n▸ Preparar las ideas fuerza para la votación');
+await admin.click('[data-pestana="ideas"]');
+await admin.waitForSelector('#nueva-idea');
+await admin.fill('#nueva-idea', 'Formación práctica en IA para equipos y voluntariado');
+await admin.click('#btn-nueva-idea');
+await admin.waitForTimeout(900);
+await admin.fill('#nueva-idea', 'Asesoría jurídica accesible para entidades pequeñas');
+await admin.click('#btn-nueva-idea');
+await admin.waitForTimeout(900);
+const antes = await admin.locator('#btn-votacion').innerText();
+await admin.click('#btn-votacion');
+await admin.waitForTimeout(900);
+const despues = await admin.locator('#btn-votacion').innerText();
+comprobar(antes !== despues, 'El dinamizador puede abrir y cerrar la votación');
+if (!despues.includes('Cerrar')) {
+  await admin.click('#btn-votacion');
+  await admin.waitForTimeout(900);
+}
+comprobar(
+  (await admin.locator('#btn-votacion').innerText()).includes('Cerrar'),
+  'La votación queda abierta para los participantes'
+);
+comprobar((await admin.locator('.tarjeta-mesa').count()) >= 1, 'Las ideas cargadas se listan');
+await captura(admin, 'admin-ideas');
+
+console.log('\n▸ Retos e ideas fuerza');
+await page.reload({ waitUntil: 'networkidle' });
+await esperarHash(page, 'semaforo');
+await page.click('#btn-siguiente');
+await page.waitForSelector('[data-categoria]');
+await page.click('[data-categoria="Formación"]');
+await page.click('[data-categoria="Proveedores"]');
+await page.fill('#campo-reto', 'Necesitamos formación práctica en IA para el equipo y el voluntariado.');
+await page.waitForTimeout(200);
+await captura(page, 'retos');
+await page.click('#btn-guardar-retos');
+await page.waitForSelector('#aviso-retos .mensaje-ok', { timeout: 5000 });
+comprobar(true, 'Los retos se guardan');
+comprobar(await page.locator('#btn-votar').isVisible(), 'La votación de ideas fuerza está disponible');
+await page.locator('[data-idea]').first().click();
+comprobar(
+  (await page.locator('[data-idea][aria-pressed="true"]').count()) === 1,
+  'Se puede marcar una idea fuerza'
+);
+await page.locator('[data-idea]').nth(1).click();
+comprobar(
+  (await page.locator('[data-idea][aria-pressed="true"]').count()) === 2,
+  'Se pueden marcar dos ideas fuerza'
+);
+await page.click('#btn-votar');
+await page.waitForSelector('#aviso-voto .mensaje-ok', { timeout: 5000 });
+comprobar(true, 'El voto se registra');
+await captura(page, 'retos-votacion');
+
+console.log('\n▸ Cierre');
+await page.click('#btn-siguiente');
+await page.waitForSelector('.mensajes, .titulo-grande');
+comprobar((await page.locator('.titulo-grande').innerText()).includes('Lo que os lleváis'), 'La pantalla de cierre se muestra');
+await captura(page, 'cierre');
+
+console.log('\n▸ Panel de dinamización · resto de pestañas');
+await admin.click('[data-pestana="mesas"]');
+await admin.waitForSelector('#guia-casos');
+await admin.waitForTimeout(900);
+comprobar((await admin.locator('.tarjeta-mesa').count()) >= 4, 'Muestra las respuestas por mesa');
+comprobar(
+  (await admin.locator('#guia-casos .tarjeta-mesa').count()) === 4,
+  'Incluye la guía de resolución de los cuatro casos'
+);
+await captura(admin, 'admin-mesas');
+
+await admin.click('[data-pestana="moderacion"]');
+await admin.waitForSelector('.texto-moderar');
+comprobar((await admin.locator('.texto-moderar').count()) >= 4, 'La revisión de textos lista los textos libres');
+await admin.click('.texto-moderar .chip[data-estado="aprobado"]');
+await admin.waitForTimeout(900);
+comprobar((await admin.locator('.estado-aprobado').count()) > 0, 'Se puede aprobar un texto');
+await captura(admin, 'admin-moderacion');
+
+await admin.click('[data-pestana="descargas"]');
+await admin.waitForSelector('img[src*="qr.svg"]');
+await admin.waitForTimeout(900);
+comprobar(await admin.locator('img[src*="qr.svg"]').isVisible(), 'Se muestra el código QR de acceso');
+await captura(admin, 'admin-descargas');
+
+await admin.click('[data-pestana="proyector"]');
+await admin.waitForSelector('.proyector');
+comprobar(true, 'La vista proyector funciona');
+await captura(admin, 'admin-proyector');
+
+console.log('\n▸ Cartela imprimible');
+const cartel = await contexto.newPage();
+await cartel.goto(`${BASE}/cartela`, { waitUntil: 'networkidle' });
+await cartel.waitForSelector('.cartela-qr svg', { timeout: 8000 });
+comprobar(true, 'La cartela incluye el código QR');
+await cartel.screenshot({ path: `${DIR}/cartela.png`, fullPage: true });
+console.log(`  📸 ${DIR}/cartela.png`);
+await cartel.close();
+
+console.log('\n▸ Página legal');
+const legal = await contexto.newPage();
+await legal.goto(`${BASE}/legal`, { waitUntil: 'networkidle' });
+await legal.waitForSelector('h3');
+comprobar((await legal.locator('h3').count()) >= 8, 'La página legal muestra todas las secciones');
+await legal.screenshot({ path: `${DIR}/legal.png`, fullPage: true });
+console.log(`  📸 ${DIR}/legal.png`);
+await legal.close();
+
+/* ---------------------------------------------------------------- */
+
+console.log('\n▸ Privacidad');
+comprobar(peticionesExternas.length === 0, `No se hace ninguna petición a terceros (${peticionesExternas.length})`);
+if (peticionesExternas.length) console.error('   ', peticionesExternas.slice(0, 5));
+
+const cookies = await contexto.cookies();
+comprobar(cookies.length === 0, 'No se crea ninguna cookie');
+
+const almacenamiento = await page.evaluate(() => ({
+  local: Object.keys(localStorage).length,
+  session: Object.keys(sessionStorage)
+}));
+comprobar(almacenamiento.local === 0, 'No se usa localStorage');
+const permitidas = ['t4_codigo', 't4_semaforo'];
+comprobar(
+  almacenamiento.session.every((k) => permitidas.includes(k)),
+  `sessionStorage solo contiene claves de sesión (${almacenamiento.session.join(', ')})`
+);
+comprobar(
+  almacenamiento.session.every((k) => !/nombre|email|entidad|telefono/i.test(k)),
+  'Ninguna clave de sesión alude a datos personales'
+);
+
+await navegador.close();
+
+console.log(`\n${errores.length === 0 ? '✅ Recorrido completo sin errores' : `❌ ${errores.length} problema(s):`}`);
+for (const e of errores) console.error('   -', e);
+process.exit(errores.length === 0 ? 0 : 1);

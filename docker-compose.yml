@@ -1,0 +1,81 @@
+# =============================================================================
+#  Taller 4 · «Entidades seguras en un mundo digital»
+#  Despliegue con Docker Compose + nginx como proxy inverso.
+#
+#  Uso rápido:
+#      cp .env.ejemplo .env   (y edita los valores)
+#      docker compose up -d --build
+#
+#  Notas de privacidad:
+#    · El puerto 3000 se publica SOLO en 127.0.0.1: el único que puede
+#      llegar a la app es nginx. nobody más llega a los datos.
+#    · nginx no registra la IP de los participantes (access_log off) y no se
+#      la reenvía a la app. Ver deploy/nginx/taller4.conf.
+#    · Los datos se guardan en un volumen con los permisos correctos.
+# =============================================================================
+
+services:
+  app:
+    build: .
+    container_name: taller4-app
+    restart: unless-stopped
+
+    # Solo loopback: el acceso público entra por nginx, no por aquí.
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    # Que el proceso sea el PID 1 y recoja las señales de parada correctamente
+    # (el servidor las gestiona para cerrar sin cortar respuestas a medias).
+    init: true
+
+    # Margen para que el cierre ordenado termine antes de matar el proceso.
+    stop_grace_period: 20s
+
+    security_opt:
+      - no-new-privileges:true
+
+    environment:
+      # ---- Panel de dinamización -------------------------------------------
+      # Cámbiala antes de desplegar. Si la dejas vacía, el servidor genera
+      # una y la guarda en data/admin-password.txt.
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+
+      # ---- Conservación de datos -------------------------------------------
+      WORKSHOP_DATE: ${WORKSHOP_DATE:-2026-11-22}
+      RETENTION_DAYS: ${RETENTION_DAYS:-10}
+      MIN_N: ${MIN_N:-3}
+
+      # ---- Dirección pública (la que codifica el QR) ----------------------
+      # Sin https:// el QR no funcionará. Debe ser exactamente la URL por la
+      # que entran las personas participantes.
+      PUBLIC_URL: ${PUBLIC_URL:-}
+
+      # ---- Información del responsable (art. 13 RGPD) ----------------------
+      RESPONSABLE: ${RESPONSABLE:-Pérez-Llorca}
+      RESPONSABLE_CARGO: ${RESPONSABLE_CARGO:-Responsable del tratamiento de los datos del taller}
+      CONTACTO: ${CONTACTO:-protecciondatos@perezllorca.com}
+      ENTIDAD_ALOJAMIENTO: ${ENTIDAD_ALOJAMIENTO:-}
+      DESTINATARIO_EXTERNO: ${DESTINATARIO_EXTERNO:-Fundación Fresno}
+      BASE_LEGAL: ${BASE_LEGAL:-}
+      ENLACE_INFO: ${ENLACE_INFO:-}
+
+      # ---- Datos del evento ------------------------------------------------
+      FECHA_TEXTO: ${FECHA_TEXTO:-Encuentro anual de la Red Solidaria Santander}
+      LUGAR_TEXTO: ${LUGAR_TEXTO:-}
+
+    volumes:
+      # Volumen con nombre: Docker lo crea ya con el propietario correcto
+      # (usuario «node»), de modo que la app puede escribir sin problemas.
+      - taller4-data:/app/data
+
+    logging:
+      # Registro del propio Docker: sin IPs de los visitantes (la app no
+      # registra ninguna) y con rotación para no acumular indefinidamente.
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+volumes:
+  taller4-data:
+    name: taller4-data

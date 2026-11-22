@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cartela de acceso · Taller 4</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/assets/icono.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      body {
+        background: var(--azul-oscuro);
+      }
+      .cartela {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        background: var(--blanco);
+        padding: 18mm;
+        display: flex;
+        flex-direction: column;
+      }
+      .cartela-cabecera {
+        border-bottom: 2px solid var(--azul);
+        padding-bottom: 6mm;
+        margin-bottom: 8mm;
+      }
+      .cartela-cabecera h1 {
+        font-size: 26pt;
+        line-height: 1.1;
+        margin: 3mm 0 2mm;
+      }
+      .cartela-cuerpo {
+        display: grid;
+        grid-template-columns: 78mm 1fr;
+        gap: 10mm;
+        align-items: center;
+        flex: 1;
+      }
+      .cartela-qr {
+        width: 78mm;
+        height: 78mm;
+      }
+      .cartela-qr svg,
+      .cartela-qr img {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .cartela-pie {
+        border-top: 1px solid var(--azul-medio);
+        margin-top: 8mm;
+        padding-top: 4mm;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        font-size: 9pt;
+        color: var(--texto-suave);
+      }
+      .cartela-pie img {
+        height: 8mm;
+        width: auto;
+      }
+      .pasos-cartela {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 6mm;
+        font-size: 11pt;
+      }
+      .pasos-cartela li {
+        padding: 2mm 0;
+        border-bottom: 1px solid var(--azul-claro);
+      }
+      .pasos-cartela strong {
+        color: var(--azul);
+      }
+      @media print {
+        body {
+          background: var(--blanco);
+        }
+        .no-imprimir {
+          display: none !important;
+        }
+        .cartela {
+          width: auto;
+          min-height: auto;
+          padding: 0;
+        }
+        @page {
+          size: A4 portrait;
+          margin: 12mm;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cartela" id="cartela">
+      <p class="nota">Cargando…</p>
+    </div>
+    <script type="module" src="/cartela.js"></script>
+  </body>
+</html>

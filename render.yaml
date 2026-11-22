@@ -1,0 +1,37 @@
+# Despliegue en Render (https://render.com) a partir de este repositorio.
+#
+#   1. Sube el código a Git.
+#   2. En Render: New → Blueprint → apunta al repositorio.
+#   3. Rellena ADMIN_PASSWORD en el panel de variables de entorno.
+#
+# Alternativa manual: New → Web Service (Render detecta el Dockerfile).
+
+services:
+  - type: web
+    name: taller4-app
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/config
+    envVars:
+      - key: ADMIN_PASSWORD
+        sync: false # se define en el panel de Render
+      - key: WORKSHOP_DATE
+        value: "2026-11-22"
+      - key: RETENTION_DAYS
+        value: "10"
+      - key: MIN_N
+        value: "3"
+      - key: PUBLIC_URL
+        fromService:
+          type: web
+          name: taller4-app
+          envVarKey: RENDER_EXTERNAL_URL
+          property: host
+      - key: RESPONSABLE
+        value: "Pérez-Llorca"
+      - key: CONTACTO
+        value: "protecciondatos@perezllorca.com"
+    disk:
+      name: datos
+      mountPath: /app/data
+      sizeGB: 1

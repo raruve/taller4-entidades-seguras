@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Entidades seguras en un mundo digital · App del Taller 4</title>
+    <meta
+      name="description"
+      content="App del Taller 4 de la Red Solidaria Santander: protección de datos, ciberseguridad e IA para entidades sociales. Sin registro y sin datos personales."
+    />
+    <meta name="theme-color" content="#005487" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/assets/icono.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/assets/icono-180.png" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="barra-coral"></div>
+
+    <header class="cabecera">
+      <div class="envoltorio">
+        <div class="cabecera-fila">
+          <span class="marca" id="marca">Red Solidaria Santander · Taller 4</span>
+          <span class="codigo-sesion" id="codigo-sesion" hidden></span>
+        </div>
+        <h1 id="titulo-app">Entidades seguras en un mundo digital</h1>
+        <div class="pasos" id="pasos" aria-hidden="true"></div>
+      </div>
+    </header>
+
+    <main class="envoltorio" id="app" role="main">
+      <p class="nota">Cargando…</p>
+    </main>
+
+    <nav class="nav-inferior" id="nav-inferior" hidden>
+      <span class="contador-paso" id="contador-paso"></span>
+      <button type="button" class="boton boton-linea" id="btn-atras">Atrás</button>
+      <button type="button" class="boton boton-primario" id="btn-siguiente">Continuar</button>
+    </nav>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

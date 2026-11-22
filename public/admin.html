@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Panel de dinamización · Taller 4</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/assets/icono.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body class="admin">
+    <div class="barra-coral"></div>
+
+    <header class="cabecera">
+      <div class="envoltorio admin-ancho">
+        <div class="cabecera-fila">
+          <span class="marca">Taller 4 · Panel de dinamización</span>
+          <span class="codigo-sesion" id="estado-purga"></span>
+        </div>
+        <h1 id="titulo-admin">Entidades seguras en un mundo digital</h1>
+      </div>
+    </header>
+
+    <main class="envoltorio admin-ancho" id="admin">
+      <div class="tarjeta">
+        <div class="kicker">Acceso restringido</div>
+        <h2>Panel de dinamización</h2>
+        <p class="nota">Acceso para el equipo dinamizador. Las respuestas se muestran agregadas y el texto libre requiere revisión antes de exportarlo.</p>
+        <form id="form-login">
+          <div class="campo-bloque">
+            <label class="campo" for="password">Contraseña</label>
+            <input type="password" id="password" autocomplete="current-password" />
+          </div>
+          <button type="submit" class="boton boton-primario">Entrar</button>
+          <div id="aviso-login"></div>
+        </form>
+      </div>
+    </main>
+
+    <script type="module" src="/admin.js"></script>
+  </body>
+</html>

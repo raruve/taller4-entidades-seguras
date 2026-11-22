@@ -1,0 +1,21 @@
+{
+  "name": "app-taller4-entidades-seguras",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "App del Taller 4 · Entidades seguras en un mundo digital — Red Solidaria Santander / Pérez-Llorca",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node test/qr.test.js",
+    "test:e2e": "node test/recorrido.mjs http://localhost:3000"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}

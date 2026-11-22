@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Autodiagnóstico · Taller 4</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/assets/icono.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      body {
+        background: var(--blanco);
+      }
+      .hoja {
+        max-width: 46rem;
+        margin: 0 auto;
+        padding: 1.5rem 1.25rem 3rem;
+      }
+      .hoja-cabecera {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        border-bottom: 2px solid var(--azul);
+        padding-bottom: 0.8rem;
+        margin-bottom: 1.2rem;
+      }
+      .hoja-cabecera h1 {
+        font-size: 1.35rem;
+        margin: 0.2rem 0 0.3rem;
+      }
+      .hoja-cabecera img {
+        height: 1.7rem;
+        width: auto;
+      }
+      .tabla-impresion {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.78rem;
+        margin-bottom: 1.2rem;
+      }
+      .tabla-impresion th,
+      .tabla-impresion td {
+        border: 1px solid var(--azul-medio);
+        padding: 0.4rem 0.45rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      .tabla-impresion th {
+        background: var(--azul-claro);
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--azul-oscuro);
+      }
+      .marca-estado {
+        display: inline-block;
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 50%;
+        border: 1.5px solid var(--azul-medio);
+        vertical-align: middle;
+      }
+      .marca-estado.verde.elegido {
+        background: var(--azul);
+        border-color: var(--azul);
+      }
+      .marca-estado.ambar.elegido {
+        background: var(--ambar);
+        border-color: var(--ambar);
+      }
+      .marca-estado.rojo.elegido {
+        background: var(--coral);
+        border-color: var(--coral);
+      }
+      .prioridades {
+        counter-reset: p;
+        list-style: none;
+        padding: 0;
+      }
+      .prioridades li {
+        counter-increment: p;
+        padding: 0.4rem 0;
+        border-bottom: 1px solid var(--linea);
+        font-size: 0.88rem;
+      }
+      .prioridades li strong {
+        color: var(--coral);
+        margin-right: 0.4rem;
+      }
+      .pie-impresion {
+        margin-top: 1.5rem;
+        padding-top: 0.8rem;
+        border-top: 1px solid var(--linea);
+        font-size: 0.68rem;
+        color: var(--texto-suave);
+      }
+      .sin-datos {
+        padding: 2rem 0;
+        text-align: center;
+        color: var(--texto-suave);
+      }
+      @media print {
+        .no-imprimir {
+          display: none !important;
+        }
+        .hoja {
+          padding: 0;
+          max-width: none;
+        }
+        .tabla-impresion tr {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hoja" id="hoja">
+      <p class="nota">Cargando…</p>
+    </div>
+    <script type="module" src="/imprimir.js"></script>
+  </body>
+</html>

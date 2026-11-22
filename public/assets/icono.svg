@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Taller 4 · Entidades seguras en un mundo digital">
+  <rect width="512" height="512" rx="96" fill="#005487" />
+  <g fill="none" stroke="#F15841" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M150 140 L256 256 L150 372" />
+  </g>
+  <text x="256" y="452" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="700"
+        fill="#DAE6EE" text-anchor="middle" letter-spacing="2">T4</text>
+</svg>
