@@ -284,8 +284,18 @@ URL="https://$SERVICIO.onrender.com"
 rd -X PATCH "$RD_API/services/$SERVICIO_ID" \
    -d '{"envVars":[{"key":"PUBLIC_URL","value":"'"$URL"'"}]}' >/dev/null || true
 
-# Disparar el despliegue.
-rd -X POST "$RD_API/services/$SERVICIO_ID/deploys" -o /tmp/render-deploy.json >/dev/null
+# Disparar el despliegue. Se indica el commit exacto: si se omite, Render
+# puede construir el último commit que ya tenía en caché y desplegar código
+# anterior al que se acaba de subir.
+COMMIT=$(git -C "$BASE" rev-parse HEAD 2>/dev/null || echo "")
+if [ -n "$COMMIT" ]; then
+  rd -X POST "$RD_API/services/$SERVICIO_ID/deploys" \
+     -d "{\"commitId\":\"$COMMIT\",\"clearCache\":\"do_not_clear\"}" \
+     -o /tmp/render-deploy.json >/dev/null
+  gris "Commit: $COMMIT"
+else
+  rd -X POST "$RD_API/services/$SERVICIO_ID/deploys" -o /tmp/render-deploy.json >/dev/null
+fi
 verde "Despliegue disparado. Construyendo la imagen…"
 gris "(La primera construcción puede tardar varios minutos.)"
 
