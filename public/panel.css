@@ -198,7 +198,7 @@ body.panel-ponente {
 .panel-cuerpo {
   padding: 1.2rem 1.6rem 1.6rem;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(21rem, 100%), 1fr));
   gap: 1rem;
   align-items: start;
 }
@@ -276,7 +276,7 @@ body.panel-ponente {
 
 .semaforo-panel {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(26rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(26rem, 100%), 1fr));
   gap: 0.5rem 1.4rem;
 }
 
@@ -305,6 +305,7 @@ body.panel-ponente {
 
 .medida-panel .texto {
   flex: 1 1 14rem;
+  min-width: 0;
   font-size: 0.88rem;
   color: var(--blanco);
   line-height: 1.25;
@@ -466,5 +467,25 @@ body.panel-ponente {
 
   .medida-panel .texto {
     font-size: 0.95rem;
+  }
+}
+
+/* En pantallas estrechas el semáforo se apila: el texto arriba y los tres
+   contadores en la línea siguiente, para que no haya que desplazar la
+   pantalla de lado. */
+@media (max-width: 560px) {
+  .panel-cab,
+  .panel-cuerpo,
+  .panel-pie {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .medida-panel .texto {
+    flex: 1 1 calc(100% - 2.2rem);
+  }
+
+  .medida-panel .pildoras {
+    margin-left: 2.2rem;
   }
 }

@@ -308,6 +308,15 @@ comprobar(
 );
 await captura(panel, 'panel-ponente');
 
+// En un móvil el panel no debe desbordarse: se proyecta desde un portátil,
+// pero se puede consultar desde el teléfono.
+await panel.setViewportSize({ width: 360, height: 780 });
+await panel.waitForTimeout(400);
+comprobar(
+  await panel.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1),
+  'El panel del ponente no se desborda en un móvil'
+);
+
 // El botón del panel de dinamización abre el panel del ponente en otra
 // pestaña, ya con la sesión iniciada.
 const [panelDesdeAdmin] = await Promise.all([
