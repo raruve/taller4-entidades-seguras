@@ -243,6 +243,48 @@ console.log('\n▸ Semáforo');
 await page.click('#btn-siguiente');
 await page.waitForSelector('.medida');
 comprobar((await page.locator('.medida').count()) === 10, 'Hay diez medidas');
+
+// El punto de «verde» tiene que ser verde, no el azul de marca.
+const colorVerde = await page
+  .locator('.semaforo-boton[data-estado="verde"] .punto')
+  .first()
+  .evaluate((e) => getComputedStyle(e).backgroundColor);
+comprobar(
+  colorVerde === 'rgb(30, 122, 80)',
+  `El punto de «verde» es verde y no azul (${colorVerde})`
+);
+const colorAmbar = await page
+  .locator('.semaforo-boton[data-estado="ambar"] .punto')
+  .first()
+  .evaluate((e) => getComputedStyle(e).backgroundColor);
+const colorRojo = await page
+  .locator('.semaforo-boton[data-estado="rojo"] .punto')
+  .first()
+  .evaluate((e) => getComputedStyle(e).backgroundColor);
+comprobar(
+  new Set([colorVerde, colorAmbar, colorRojo]).size === 3,
+  'Los tres colores del semáforo se distinguen entre sí'
+);
+
+// Las medidas 5 y 9 están reformuladas: el código de colores tiene que
+// permitir distinguir niveles de riesgo.
+const textoMedida = async (n) =>
+  (await page.locator(`.medida:nth-of-type(${n}) .medida-texto`).innerText()).trim();
+const texto5 = await textoMedida(5);
+const texto9 = await textoMedida(9);
+comprobar(
+  texto5.includes('contrato de encargado') && texto5.includes('conocemos'),
+  'La medida 5 se formula en términos de riesgo'
+);
+comprobar(
+  texto9.includes('protocolo de actuación definido'),
+  'La medida 9 pregunta por el protocolo de actuación'
+);
+comprobar(
+  !texto9.includes('(') && !texto9.includes(')'),
+  'La medida 9 no conserva los ejemplos entre paréntesis'
+);
+
 await page.click('.medida:nth-of-type(1) .semaforo-boton[data-estado="verde"]');
 await page.click('.medida:nth-of-type(2) .semaforo-boton[data-estado="ambar"]');
 await page.click('.medida:nth-of-type(3) .semaforo-boton[data-estado="rojo"]');

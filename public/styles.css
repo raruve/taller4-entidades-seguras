@@ -14,6 +14,7 @@
   --azul-claro: #dae6ee;
   --azul-medio: #b3ccdb;
   --ambar: #d79a2b;
+  --verde: #1e7a50;
   --granate: #79242f;
   --blanco: #ffffff;
   --negro: #000000;
@@ -525,8 +526,8 @@ small {
 }
 
 .semaforo-boton[data-estado="verde"] .punto {
-  background: var(--azul);
-  border-color: var(--azul);
+  background: var(--verde);
+  border-color: var(--verde);
 }
 
 .semaforo-boton[data-estado="ambar"] .punto {
@@ -540,8 +541,8 @@ small {
 }
 
 .semaforo-boton[aria-pressed="true"][data-estado="verde"] {
-  background: var(--azul);
-  border-color: var(--azul);
+  background: var(--verde);
+  border-color: var(--verde);
   color: var(--blanco);
 }
 

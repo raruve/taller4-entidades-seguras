@@ -362,6 +362,8 @@ body.panel-ponente {
   border-color: transparent;
 }
 
+/* El verde del semáforo: sobre fondo oscuro se usa un tono más claro que el
+   de la app (--verde) para que se lea desde el fondo de la sala. */
 .pildora.principal.verde {
   background: #2f9e6b;
 }

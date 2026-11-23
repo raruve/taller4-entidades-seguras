@@ -345,11 +345,11 @@ export const SEMAFORO = [
   { n: 2, medida: 'Cada persona usa su propia cuenta, con doble factor en correo, banca y nube', verdeSi: 'No hay contraseñas compartidas y el doble factor está activado' },
   { n: 3, medida: 'Copias de seguridad periódicas y probadas', verdeSi: 'Hay copia automática, una fuera de línea, y se ha probado restaurarla' },
   { n: 4, medida: 'Pagos: doble verificación de cualquier cambio de cuenta y doble autorización', verdeSi: 'Existe una regla escrita y la verificación del beneficiario del banco está activa' },
-  { n: 5, medida: 'Proveedores que ven datos con contrato de encargado', verdeSi: 'Nube, CRM, gestoría, plataformas de donaciones y herramientas de IA tienen contrato' },
+  { n: 5, medida: 'Los proveedores que nos ven datos los conocemos y tienen contrato de encargado', verdeSi: 'Sabemos cuáles nos ven datos y todos tienen contrato: nube, CRM, gestoría, donaciones, IA' },
   { n: 6, medida: 'Pauta escrita de uso de IA', verdeSi: 'Hay herramientas autorizadas y una lista de datos que nunca se introducen' },
   { n: 7, medida: 'Formación anual en datos, ciberseguridad e IA', verdeSi: 'Incluye a equipo, voluntariado y patronato, y queda registrada' },
   { n: 8, medida: 'Imágenes y comunicaciones con menores y personas atendidas', verdeSi: 'Autorizaciones específicas por escrito y canales corporativos, no móviles personales' },
-  { n: 9, medida: 'Procedimiento ante incidentes', verdeSi: 'Sabemos a quién avisar (banco, AEPD en 72 horas, familias, policía) y quién decide' },
+  { n: 9, medida: 'Tenemos un protocolo de actuación definido en caso de incidentes', verdeSi: 'Está escrito, el equipo lo conoce y sabemos a quién avisar y con qué plazo' },
   { n: 10, medida: 'Altas y bajas de accesos', verdeSi: 'Cuando alguien entra o sale (también voluntariado), se dan o retiran permisos ese mismo día' }
 ];
 
