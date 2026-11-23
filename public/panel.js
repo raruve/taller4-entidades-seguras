@@ -239,7 +239,7 @@ function pintarIdeas(datos) {
   if (!ideas.length) {
     return bloqueVacio('Qué pide el sector', 'Todavía no hay propuestas cargadas');
   }
-  return `<section class="bloque-panel">
+  return `<section class="bloque-panel ancho">
     <h2>Qué pide el sector</h2>
     <p class="sub">${
       datos.votacionAbierta
@@ -266,11 +266,13 @@ function pintar() {
   $('#ultima-lectura').textContent = `Última lectura: ${new Date(datos.generado).toLocaleTimeString('es-ES')}`;
   $('#panel-conservacion').textContent = `Datos brutos: borrado automático el ${datos.conservacion.fechaBorrado}`;
 
+  // El bloque de lo que pide el sector va el segundo: es la parte que se
+  // mueve durante la votación.
   $('#contenido').innerHTML = [
     pintarSemaforo(datos),
+    pintarIdeas(datos),
     pintarTermometro(datos),
-    pintarCasos(datos),
-    pintarIdeas(datos)
+    pintarCasos(datos)
   ].join('');
 }
 
