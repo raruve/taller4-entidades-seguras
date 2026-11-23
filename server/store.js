@@ -36,6 +36,7 @@ import {
   RESULTADOS_ESPERADOS,
   VERIFICACIONES
 } from './content.js';
+import { detectarDatosPersonales, mensajeDatosPersonales } from '../public/comun/datos.js';
 
 const FICHERO_RESPUESTAS = path.join(DATA_DIR, 'respuestas.json');
 const FICHERO_CONFIG = path.join(DATA_DIR, 'config.json');
@@ -44,6 +45,7 @@ const FICHERO_AUDITORIA = path.join(DATA_DIR, 'auditoria.log');
 const FICHERO_INICIO = path.join(DATA_DIR, 'inicio.json');
 
 const CODIGOS_TEXTO = 600; // caracteres máximos por respuesta libre
+const LIMITE_NECESIDAD = 200; // caracteres máximos por necesidad publicada
 const MAX_PARTICIPANTES = 5000;
 
 /* ------------------------------------------------------------------ *
@@ -193,6 +195,7 @@ function estadoSesion(id) {
     mesa: sesion.mesa || null,
     semaforo: sesion.semaforo || null,
     retos: sesion.retos || null,
+    votacion: sesion.votacion || null,
     creada: sesion.creada
   };
 }
@@ -204,6 +207,13 @@ function estadoSesion(id) {
 function incrementar(contenedor, clave, delta = 1) {
   if (!clave) return;
   contenedor[clave] = (contenedor[clave] || 0) + delta;
+}
+
+function decrementar(contenedor, clave, delta = 1) {
+  if (!clave) return;
+  const valor = (contenedor[clave] || 0) - delta;
+  if (valor > 0) contenedor[clave] = valor;
+  else delete contenedor[clave];
 }
 
 function actualizarAgregados(seccion, datos) {
@@ -271,10 +281,102 @@ function moderar(clave, estado) {
     }
     respuestas.moderacion[clave].estado = estado;
     respuestas.moderacion[clave].actualizado = new Date().toISOString();
+
+    // Si lo que se rechaza es una necesidad publicada, sale de la app: ni
+    // los asistentes ni la pantalla del ponente la siguen viendo.
+    const ideaId = respuestas.moderacion[clave].ideaId;
+    if (estado === 'rechazado' && ideaId) {
+      const antes = config.ideas.length;
+      config.ideas = config.ideas.filter((i) => i.id !== ideaId);
+      if (config.ideas.length !== antes) {
+        guardarConfig();
+        registrarAuditoria('NECESIDAD_RETIRADA', { id: ideaId });
+      }
+    }
+
     escribirJson(FICHERO_RESPUESTAS, respuestas);
     registrarAuditoria('MODERACION', { clave: `${clave.split('#')[0].slice(0, 8)}…#${clave.split('#')[1]}`, estado });
     return respuestas.moderacion[clave];
   });
+}
+
+/**
+ * Aprueba de una vez todas las necesidades publicadas que quedaban
+ * pendientes de revisión.
+ *
+ * Lo usa la persona dinamizadora al final de la sesión: comprueba en la
+ * pantalla del ponente que lo que se ha publicado sirve para el informe y
+ * aprueba el bloque entero de un clic.
+ */
+function aprobarNecesidades() {
+  return enCola(async () => {
+    let aprobadas = 0;
+    const ahora = new Date().toISOString();
+    for (const [clave, m] of Object.entries(respuestas.moderacion)) {
+      if (!clave.endsWith('#reto') || m.estado !== 'pendiente') continue;
+      m.estado = 'aprobado';
+      m.actualizado = ahora;
+      aprobadas++;
+    }
+    if (aprobadas) escribirJson(FICHERO_RESPUESTAS, respuestas);
+    registrarAuditoria('MODERACION', { accion: 'aprobar-necesidades', aprobadas });
+    return { aprobadas };
+  });
+}
+
+/**
+ * Publica la necesidad escrita por un participante en «¿Qué necesita el
+ * sector?».
+ *
+ * A diferencia del resto del texto libre —que espera a la revisión de la
+ * persona dinamizadora—, la necesidad se publica en el acto: es el
+ * ejercicio, y todos los asistentes tienen que poder verla y votarla desde
+ * su móvil en la misma sala.
+ *
+ * Lo que protege la publicación automática es el filtro de datos
+ * personales (las mismas reglas que ve el participante mientras escribe,
+ * aplicadas aquí en el servidor) y el botón de la persona dinamizadora
+ * para retirar cualquier necesidad de la app.
+ *
+ * Una necesidad por sesión: si el participant la edita, se actualiza la
+ * misma (no se duplica) y vuelve a pasar por la cola de revisión para la
+ * exportación.
+ */
+function publicarNecesidad(id, { categorias, reto }) {
+  const avisos = detectarDatosPersonales(reto);
+  if (avisos.length) {
+    throw Object.assign(new Error(mensajeDatosPersonales(avisos)), { status: 400 });
+  }
+
+  const clave = CLAVE_TEXTO(id, 'reto');
+  const anterior = respuestas.moderacion[clave];
+  const ahora = new Date().toISOString();
+  const ideaId =
+    anterior?.ideaId || `n${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`;
+
+  const idea = {
+    id: ideaId,
+    texto: reto,
+    categoria: categorias[0] || 'General',
+    origen: 'participante',
+    creada: anterior?.creada || ahora,
+    actualizada: ahora
+  };
+
+  const indice = config.ideas.findIndex((i) => i.id === ideaId);
+  if (indice >= 0) config.ideas[indice] = { ...config.ideas[indice], ...idea };
+  else config.ideas.push(idea);
+  guardarConfig();
+
+  respuestas.moderacion[clave] = {
+    estado: 'pendiente',
+    ideaId,
+    creado: anterior?.creado || ahora,
+    actualizado: ahora
+  };
+
+  registrarAuditoria('NECESIDAD_PUBLICADA', { id: ideaId, categoria: idea.categoria });
+  return idea;
 }
 
 /* ------------------------------------------------------------------ *
@@ -391,11 +493,17 @@ function resumen() {
       c.ultima = c.mesas[alias].ultima;
     }
     if (sesion.retos && sesion.retos.reto && sesion.retos.reto.trim()) {
+      const clave = CLAVE_TEXTO(id, 'reto');
+      const registro = respuestas.moderacion[clave] || {};
       textos.push({
-        id: CLAVE_TEXTO(id, 'reto'),
+        id: clave,
         campo: 'reto',
         texto: sesion.retos.reto.trim(),
-        estado: (respuestas.moderacion[CLAVE_TEXTO(id, 'reto')] || {}).estado || 'pendiente'
+        estado: registro.estado || 'pendiente',
+        // Las necesidades se publican en la app en el acto: la persona
+        // dinamizadora las ve en la pantalla del ponente y aquí decides si
+        // pueden ir en el informe para la Red Solidaria.
+        publicada: Boolean(registro.ideaId)
       });
     }
     for (const campo of ['riesgo', 'hacer', 'necesidad']) {
@@ -423,6 +531,15 @@ function resumen() {
   const votosPorIdea = {};
   for (const idea of config.ideas) votosPorIdea[idea.id] = agregados.votos[idea.id] || 0;
 
+  // Estado de cada necesidad publicada: 'aprobada' (puede ir en el informe
+  // para Fresno), 'pendiente' (aún revisada por la persona dinamizadora) o
+  // 'rechazada'. Las ideas que preparó el equipo del taller valen como
+  // aprobadas por definición: las ha escrito la organización.
+  const estadoPorIdea = {};
+  for (const m of Object.values(respuestas.moderacion)) {
+    if (m && m.ideaId) estadoPorIdea[m.ideaId] = m.estado;
+  }
+
   return {
     generado: new Date().toISOString(),
     participantes: conRespuesta.length,
@@ -444,7 +561,12 @@ function resumen() {
       resolucion: c.resolucion
     })),
     votos: votosPorIdea,
-    ideas: config.ideas.map((i) => ({ ...i, votos: votosPorIdea[i.id] || 0 })),
+    ideas: config.ideas.map((i) => ({
+      ...i,
+      votos: votosPorIdea[i.id] || 0,
+      origen: i.origen || 'facilitacion',
+      estado: estadoPorIdea[i.id] || (i.origen === 'participante' ? 'pendiente' : 'aprobada')
+    })),
     // Sugerencias para preparar la votación en directo: no se muestran a los
     // participantes hasta que la persona dinamizadora las añade.
     ideasSugeridas: IDEAS_INICIALES,
@@ -506,17 +628,25 @@ export function purgar(motivo = 'manual') {
     // 2. No hay tabla de correspondencias que borrar: nunca se ha creado
     //    (solo se almacena el hash del código de sesión).
 
-    // 3. Se conservan únicamente los recuentos agregados.
+    // 3. Las necesidades que publicó el público también son texto libre:
+    //    se retiran de la app con el resto de los datos brutos. Lo que se
+    //    queda son los recuentos, que no son datos personales.
+    const necesidades = config.ideas.filter((i) => i.origen === 'participante').length;
+    config.ideas = config.ideas.filter((i) => i.origen !== 'participante');
+    guardarConfig();
+
+    // 4. Se conservan únicamente los recuentos agregados.
     escribirJson(FICHERO_AGREGADOS, agregados);
 
     registrarAuditoria('PURGA', {
       motivo,
       sesionesBorradas: sesiones,
       textosBorrados: textos,
+      necesidadesRetiradas: necesidades,
       tablaCorrespondencias: 'no existía (solo se conservaba el hash del código de sesión)',
       conservados: 'recuentos agregados'
     });
-    return { sesionesBorradas: sesiones, textosBorrados: textos, motivo };
+    return { sesionesBorradas: sesiones, textosBorrados: textos, necesidadesRetiradas: necesidades, motivo };
   });
 }
 
@@ -587,10 +717,13 @@ function validarSemaforo(datos) {
 }
 
 function validarRetos(datos) {
-  const categorias = Array.isArray(datos.categorias)
+  // El área donde más se necesita apoyo es una sola: es el tema de la
+  // necesidad, y así el recuento por áreas se puede sumar sin duplicados.
+  const candidatas = Array.isArray(datos.categorias)
     ? [...new Set(datos.categorias.filter((c) => CATEGORIAS_RETO.includes(c)))]
     : [];
-  return { categorias, reto: limpiarTexto(datos.reto) };
+  const categorias = candidatas.slice(0, 1);
+  return { categorias, reto: limpiarTexto(datos.reto).slice(0, LIMITE_NECESIDAD) };
 }
 
 function validarMesa(datos) {
@@ -656,7 +789,11 @@ function resumenPanel() {
     prioridades: r.prioridades,
     retos: r.retos,
     casos,
-    ideas: r.ideas.map((i) => ({ id: i.id, texto: i.texto, categoria: i.categoria, votos: i.votos })),
+    // Las necesidades van ordenadas: arriba del todo las más votadas.
+    ideas: r.ideas
+      .slice()
+      .sort((a, b) => (b.votos - a.votos) || a.texto.localeCompare(b.texto, 'es'))
+      .map((i) => ({ id: i.id, texto: i.texto, categoria: i.categoria, votos: i.votos, origen: i.origen })),
     votacionAbierta: r.votacionAbierta,
     textosPendientes: r.textosPendientes,
     conservacion: r.conservacion
@@ -791,19 +928,24 @@ export const store = {
     const limpio = validarRetos(datos);
     return enCola(async () => {
       const sesion = obtenerSesion(id);
-      sesion.retos = { ...limpio, actualizado: new Date().toISOString() };
+      // La necesidad del formulario se publica en la app en el acto.
+      const idea = limpio.reto ? publicarNecesidad(id, limpio) : null;
+      sesion.retos = { ...limpio, ideaId: idea ? idea.id : null, actualizado: new Date().toISOString() };
       sesion.actualizada = new Date().toISOString();
       registrarTextos(id, 'retos', limpio);
       escribirJson(FICHERO_RESPUESTAS, respuestas);
       actualizarAgregados('retos', limpio);
       escribirJson(FICHERO_AGREGADOS, agregados);
-      return sesion.retos;
+      return { ...sesion.retos, idea };
     });
   },
   guardarVotacion(id, datos) {
     const limpio = validarVotacion(datos);
     return enCola(async () => {
       const sesion = obtenerSesion(id);
+      // Si la persona cambia su voto, se retiran los votos que había
+      // contado antes: una sola persona no puede ponderar dos veces.
+      for (const previa of sesion.votacion?.ideas || []) decrementar(agregados.votos, previa);
       sesion.votacion = { ...limpio, actualizado: new Date().toISOString() };
       sesion.actualizada = new Date().toISOString();
       escribirJson(FICHERO_RESPUESTAS, respuestas);
@@ -815,6 +957,7 @@ export const store = {
   resumen,
   resumenPanel,
   moderar,
+  aprobarNecesidades,
   listarMesas,
   crearMesa,
   actualizarMesa,

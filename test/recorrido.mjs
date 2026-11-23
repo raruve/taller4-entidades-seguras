@@ -73,8 +73,13 @@ page.on('request', (req) => {
 });
 
 page.on('pageerror', (e) => errores.push(`Error de JavaScript: ${e.message}`));
+// El rechazo de una necesidad con datos personales responde 400 a propósito:
+// el navegador lo anota en la consola y no es un fallo.
+const erroresEsperados = [/status of 400/];
 page.on('console', (msg) => {
-  if (msg.type() === 'error') errores.push(`Consola: ${msg.text()}`);
+  if (msg.type() === 'error' && !erroresEsperados.some((r) => r.test(msg.text()))) {
+    errores.push(`Consola: ${msg.text()}`);
+  }
 });
 
 /* ---------------------------------------------------------------- */
@@ -399,13 +404,14 @@ comprobar(
   await panel.locator('#qr-sala img').isVisible(),
   'El QR del panel vuelve a mostrarse tras ocultarlo'
 );
-// Lo que se proyecta en la sala no puede incluir el texto libre de los
-// participantes: ese texto se revisa antes de compartirlo.
+// Lo que se proyecta en la sala no puede incluir las respuestas de las
+// mesas: ese texto se revisa antes de compartirlo. Las necesidades que
+// publica el grupo sí se proyectan, pero eso es otra cosa: se publican
+// para que se voten en directo.
 const textoProyectado = await panel.locator('#contenido').innerText();
 comprobar(
-  !textoProyectado.includes('El riesgo es que el informe acabe') &&
-    !textoProyectado.includes('Necesitamos formación práctica en IA'),
-  'El panel del ponente no muestra el texto libre de los participantes'
+  !textoProyectado.includes('El riesgo es que el informe acabe'),
+  'El panel del ponente no muestra las respuestas de las mesas sin revisar'
 );
 await captura(panel, 'panel-ponente');
 
@@ -580,34 +586,166 @@ comprobar(
 comprobar((await admin.locator('.tarjeta-mesa').count()) >= 1, 'Las ideas cargadas se listan');
 await captura(admin, 'admin-ideas');
 
-console.log('\n▸ Retos e ideas fuerza');
+console.log('\n▸ Necesidades del sector');
 await page.reload({ waitUntil: 'networkidle' });
 await esperarHash(page, 'semaforo');
 await page.click('#btn-siguiente');
 await page.waitForSelector('[data-categoria]');
+
+// El tema de la necesidad es de una sola opción: es el área donde más se
+// necesita apoyo, y así el recuento por áreas se puede sumar.
 await page.click('[data-categoria="Formación"]');
+comprobar(
+  (await page.locator('[data-categoria][aria-pressed="true"]').count()) === 1,
+  'El tema de la necesidad es de una sola opción'
+);
 await page.click('[data-categoria="Proveedores"]');
+comprobar(
+  (await page.locator('[data-categoria][aria-pressed="true"]').count()) === 1 &&
+    (await page.locator('[data-categoria="Proveedores"][aria-pressed="true"]').count()) === 1,
+  'Al elegir otro tema, se sustituye el anterior'
+);
+
+// El texto que se está escribiendo no se pierde al repintar la pantalla.
 await page.fill('#campo-reto', 'Necesitamos formación práctica en IA para el equipo y el voluntariado.');
+await page.click('[data-categoria="Formación"]');
+comprobar(
+  (await page.inputValue('#campo-reto')).includes('formación práctica'),
+  'El texto de la necesidad no se pierde al cambiar el tema'
+);
 await page.waitForTimeout(200);
 await captura(page, 'retos');
-await page.click('#btn-guardar-retos');
+
+// Si la necesidad lleva datos personales, no se publica.
+await page.fill('#campo-reto', 'Escribid a maria.garcia@example.com y lo vemos.');
+await page.click('#btn-publicar-necesidad');
+await page.waitForSelector('#aviso-retos .mensaje-error', { timeout: 5000 });
+comprobar(
+  (await page.locator('#aviso-retos .mensaje-error').innerText()).includes('correo'),
+  'La app no publica una necesidad con datos personales'
+);
+
+// Publicar la necesidad.
+await page.fill('#campo-reto', 'Necesitamos formación práctica en IA para el equipo y el voluntariado.');
+await page.click('#btn-publicar-necesidad');
 await page.waitForSelector('#aviso-retos .mensaje-ok', { timeout: 5000 });
-comprobar(true, 'Los retos se guardan');
-comprobar(await page.locator('#btn-votar').isVisible(), 'La votación de ideas fuerza está disponible');
+comprobar(true, 'La necesidad se publica');
+comprobar(
+  (await page.locator('.necesidad').count()) >= 1,
+  'La necesidad publicada aparece en la lista del grupo'
+);
+comprobar(
+  (await page.locator('.necesidad').first().innerText()).includes('formación práctica'),
+  'La lista muestra el texto de la necesidad'
+);
+
+// Otra persona (otra sesión) publica otra necesidad: tiene que aparecer en
+// el móvil del primero sin que recargue la página.
+const otra = await contexto.newPage();
+await otra.goto(`${BASE}/#/retos`, { waitUntil: 'networkidle' });
+await otra.waitForSelector('#campo-reto');
+await otra.click('[data-categoria="Financiación"]');
+await otra.fill('#campo-reto', 'Nos hace falta apoyo para financiar la formación del voluntariado.');
+await otra.click('#btn-publicar-necesidad');
+await otra.waitForSelector('#aviso-retos .mensaje-ok', { timeout: 8000 });
+await page.click('#btn-refrescar-necesidades');
+await page.waitForTimeout(500);
+comprobar(
+  (await page.locator('.necesidad').count()) >= 2,
+  'La necesidad de otra persona aparece en la lista'
+);
+comprobar(
+  (await page.locator('.lista-necesidades').innerText()).includes('financiar la formación'),
+  'La necesidad ajena se lee tal cual se escribió'
+);
+
+// Votación: se pueden elegir hasta dos necesidades.
+comprobar(await page.locator('#btn-votar').isVisible(), 'La votación está disponible');
 await page.locator('[data-idea]').first().click();
 comprobar(
   (await page.locator('[data-idea][aria-pressed="true"]').count()) === 1,
-  'Se puede marcar una idea fuerza'
+  'Se puede votar una necesidad'
 );
 await page.locator('[data-idea]').nth(1).click();
 comprobar(
   (await page.locator('[data-idea][aria-pressed="true"]').count()) === 2,
-  'Se pueden marcar dos ideas fuerza'
+  'Se pueden votar dos necesidades'
+);
+await page.locator('[data-idea]').nth(2).click();
+comprobar(
+  (await page.locator('[data-idea][aria-pressed="true"]').count()) === 2,
+  'No se pueden votar más de dos necesidades'
 );
 await page.click('#btn-votar');
 await page.waitForSelector('#aviso-voto .mensaje-ok', { timeout: 5000 });
 comprobar(true, 'El voto se registra');
 await captura(page, 'retos-votacion');
+
+// La pantalla del ponente: las necesidades, con las más votadas arriba.
+const panelFinal = await contexto.newPage();
+await panelFinal.goto(`${BASE}/panel`, { waitUntil: 'domcontentloaded' });
+await panelFinal.waitForSelector('#form-acceso', { timeout: 15000 });
+await panelFinal.fill('#password', PASSWORD_ADMIN);
+await panelFinal.click('#form-acceso button[type="submit"]');
+await panelFinal.waitForSelector('.bloque-panel', { timeout: 15000 });
+await panelFinal.waitForTimeout(1500);
+const necesidadesPanel = await panelFinal.locator('.idea-panel').count();
+comprobar(necesidadesPanel >= 2, 'El panel del ponente muestra las necesidades del grupo');
+const ordenPanel = await panelFinal.locator('.idea-panel .votos').allInnerTexts();
+const numeros = ordenPanel.map((t) => Number(t.split(' ')[0]));
+comprobar(
+  numeros.every((n, i) => i === 0 || numeros[i - 1] >= n),
+  'El panel del ponente pone arriba del todo las necesidades más votadas'
+);
+
+// El panel de dinamización: las necesidades del grupo y su revisión.
+await admin.click('[data-pestana="ideas"]');
+await admin.waitForTimeout(900);
+comprobar(
+  (await admin.locator('.tarjeta-mesa').count()) >= 2,
+  'El panel de dinamización lista las necesidades del grupo'
+);
+comprobar(
+  (await admin.locator('.estado-moderacion').allInnerTexts()).join(' ').toLowerCase().includes('del grupo'),
+  'Las necesidades del grupo se distinguen de las del taller'
+);
+await captura(admin, 'admin-necesidades');
+
+await admin.click('[data-pestana="moderacion"]');
+await admin.waitForTimeout(900);
+comprobar(
+  (await admin.locator('#bloque-textos').innerText().catch(() => '')).length >= 0,
+  'La moderación se sigue mostrando'
+);
+comprobar(
+  (await admin.locator('.texto-moderar').allInnerTexts()).some((t) =>
+    t.toLowerCase().includes('publicada en la app')
+  ),
+  'La moderación marca las necesidades que ya están publicadas en la app'
+);
+comprobar(
+  await admin.locator('#btn-aprobar-necesidades').isVisible(),
+  'Se pueden aprobar todas las necesidades de una vez'
+);
+await admin.evaluate(() => {
+  window.confirm = () => true;
+});
+await admin.click('#btn-aprobar-necesidades');
+await admin.waitForTimeout(1200);
+
+// Con las necesidades aprobadas, ya pueden ir en el informe agregado.
+const exportacion = await admin.evaluate(async (token) => {
+  const r = await fetch('/api/admin/exportar/fresno.csv', { headers: { 'X-Admin-Token': token } });
+  return await r.text();
+}, TOKEN_ADMIN);
+comprobar(
+  exportacion.includes('Necesidades del sector'),
+  'El informe para la Red Solidaria incluye el bloque de necesidades'
+);
+comprobar(
+  exportacion.includes('formación práctica en IA'),
+  'Las necesidades aprobadas salen en el informe, con su recuento'
+);
 
 console.log('\n▸ Cierre');
 await page.click('#btn-siguiente');

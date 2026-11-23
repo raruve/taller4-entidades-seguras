@@ -41,7 +41,7 @@ sin que nadie tenga que recargar nada.
 |---|---|
 | **Dónde** | `https://taller4-app.onrender.com/panel` (pide la contraseña del taller) |
 | **Cómo se abre** | Desde `/admin` → «Resultados en directo» → «Abrir el panel del ponente». También se puede abrir a mano en otra pestaña. |
-| **Qué muestra** | Participantes que han respondido · termómetro · las 10 medidas del semáforo con el color de cada respuesta · respuestas por caso y por mesa · retos por categoría · ideas fuerza con sus votos. |
+| **Qué muestra** | Participantes que han respondido · termómetro · las 10 medidas del semáforo con el color de cada respuesta · respuestas por caso y por mesa · retos por categoría · **las necesidades del sector, con las más votadas arriba del todo**. |
 | **El QR** | En la esquina inferior derecha está el código QR de acceso, para que quien llega tarde o se queda sin la app pueda entrar desde el móvil. Con un clic se repliega y con otro vuelve a salir. |
 | **Cómo se actualiza** | Solo, cada 5 segundos. Arriba a la derecha se ve la hora de la última lectura. |
 | **Pantalla completa** | Botón «Pantalla completa» (o `F11`). |
@@ -154,25 +154,37 @@ Para cada caso:
 
 ---
 
-### 6 · Retos e ideas fuerza (10 min)
+### 6 · Necesidades del sector (10 min)
 
-1. Cada entidad marca las categorías donde necesita apoyo (formación, recursos
+1. Cada entidad elige **el área donde más necesita apoyo** (formación, recursos
    técnicos, asesoramiento jurídico, proveedores, financiación, cultura interna)
-   y, si quiere, escribe su reto principal.
-2. **Prepara la votación en directo** (es lo que pide el guion): ve al panel →
-   **«Ideas fuerza»** y añade las ideas que han salido en las mesas. Cuantas
-   más, mejor: si solo hay dos, la votación no aporta nada.
-3. Pulsa **«Abrir votación»**. Los participantes ven la lista y eligen **dos**.
-4. Al cerrar el bloque, mira el recuento en «Ideas fuerza · votación» y apunta
-   las dos más votadas: son las **dos ideas fuerza** para el cierre de la
-   jornada.
+   y escribe **su necesidad** en una frase.
+2. Al pulsar «Publicar necesidad», esa necesidad **aparece en el móvil de
+   todo el mundo** y se puede votar. No hay que hacer nada más: el listado se
+   refresca solo cada 10 segundos en cada móvil.
+3. Si quieres que entren necesidades que se han dicho en voz alta pero no se
+   han escrito, puedes añadirlas tú desde el panel → **«Necesidades»**.
+4. Pulsa **«Abrir votación»**. Los participantes ven la lista y votan **dos**
+   necesidades. Mientras la votación está abierta no se enseña el recuento,
+   para que a quien llega tarde no le influya.
+5. Al cerrar el bloque, en la **pantalla del ponente** aparecen las
+   necesidades **ordenadas por votos, con las más votadas arriba del todo**.
+   Apunta las dos primeras: son las **ideas fuerza** del cierre.
+
+**Sobre la protección de datos:** la necesidad se publica en el acto, así que
+la app la filtra automáticamente (si detecta un correo, un teléfono, un IBAN o
+un enlace, no la publica y avisa). Aun así, en «Revisión de textos» verás las
+necesidades marcadas como «publicada en la app»: revísalas y apruébalas (con
+un solo botón) antes de descargar el informe para la Red Solidaria. Si algo no
+sirve, recházala y sale de la app al instante.
 
 ---
 
 ### 7 · Cierre (fuera de la app)
 
-Cada taller aporta **dos ideas fuerza** y sus conclusiones al cierre general
-(moderado por María Ruiz-Moyano). Anótalas antes de cerrar el taller.
+Cada taller aporta **sus necesidades más votadas** y sus conclusiones al
+cierre general (moderado por María Ruiz-Moyano). Anótalas antes de cerrar el
+taller: están ordenadas en la pantalla del ponente.
 
 ---
 
@@ -196,7 +208,7 @@ Cada taller aporta **dos ideas fuerza** y sus conclusiones al cierre general
 | Recuentos de cada medida del semáforo | Respuestas individuales |
 | Recuentos de retos por categoría | Textos originales |
 | Recuento de participación en cada caso | Direcciones IP (no se registran) |
-| Votación de ideas fuerza (sin quién votó) | Identificadores de dispositivo |
+| Votación de las necesidades (sin quién votó) | Identificadores de dispositivo |
 
 Los recuentos con **menos de 3 respuestas** se suprimen automáticamente
 (`< 3`): con menos respuestas que esa, un recuento podría permitir

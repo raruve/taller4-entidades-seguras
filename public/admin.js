@@ -174,7 +174,7 @@ function render() {
     ['resultados', 'Resultados en directo'],
     ['guion', 'Guion «Lo esencial»'],
     ['mesas', 'Mesas y casos'],
-    ['ideas', 'Ideas fuerza'],
+    ['ideas', 'Necesidades'],
     ['moderacion', 'Revisión de textos'],
     ['descargas', 'Descargas y privacidad'],
     ['proyector', 'Vista proyector'],
@@ -382,7 +382,7 @@ function pestanaResultados() {
       </section>
 
       <section class="tarjeta">
-        <div class="kicker">Ideas fuerza · votación</div>
+        <div class="kicker">Necesidades del sector · votación</div>
         ${(r.ideas || [])
           .slice()
           .sort((a, b) => b.votos - a.votos)
@@ -599,16 +599,16 @@ function pestanaIdeas() {
   return `
     <div class="admin-rejilla">
       <section class="tarjeta">
-        <div class="kicker">Votación de ideas fuerza</div>
-        <p class="entradilla">La votación está <strong>${r.votacionAbierta ? 'abierta' : 'cerrada'}</strong>. Al abrirla, los participantes ven la lista y eligen dos.</p>
+        <div class="kicker">Votación de las necesidades</div>
+        <p class="entradilla">La votación está <strong>${r.votacionAbierta ? 'abierta' : 'cerrada'}</strong>. Al abrirla, los participantes ven las necesidades que ha publicado el grupo y eligen dos. Mientras está abierta no se enseña el recuento, para que a quien llega tarde no le influya.</p>
         <div class="acciones">
           <button type="button" class="boton ${r.votacionAbierta ? 'boton-linea' : 'boton-primario'}" id="btn-votacion">
             ${r.votacionAbierta ? 'Cerrar votación' : 'Abrir votación'}
           </button>
         </div>
-        <h3 style="margin:1rem 0 .4rem">Añadir una idea</h3>
+        <h3 style="margin:1rem 0 .4rem">Añadir una necesidad</h3>
         <div class="fila-admin">
-          <input type="text" id="nueva-idea" placeholder="Texto de la idea" maxlength="180" />
+          <input type="text" id="nueva-idea" placeholder="Texto de la necesidad" maxlength="180" />
           <select id="categoria-idea">
             <option>Formación</option>
             <option>Recursos técnicos</option>
@@ -619,7 +619,7 @@ function pestanaIdeas() {
           </select>
           <button type="button" class="boton boton-linea" id="btn-nueva-idea" style="flex:0 0 auto">Añadir</button>
         </div>
-        <p class="nota" style="margin-top:.6rem">Las ideas se pueden preparar en directo: recoge los retos más citados en las mesas y conviértelos en las opciones de votación.</p>
+        <p class="nota" style="margin-top:.6rem">Las necesidades del grupo se publican solas en cuanto las escriben, y se pueden votar sin preparar nada. Este formulario es para añadir, si lo necesitas, una necesidad que hasn't ditulis desde el móvil (por ejemplo, una que haya salido en las mesas).</p>
         ${
           (r.ideasSugeridas || []).length
             ? `<h3 style="margin:1rem 0 .4rem">Sugerencias para abrir la votación</h3>
@@ -629,13 +629,14 @@ function pestanaIdeas() {
                      `<button type="button" class="chip" data-anadir-sugerida="${i}">+ ${escapar(s.texto)}</button>`
                  )
                  .join('')}</div>
-               <p class="nota" style="margin-top:.4rem">Se añaden a la lista de votación con un clic. Conviene sustituirlas por lo que haya salido en las mesas.</p>`
+               <p class="nota" style="margin-top:.4rem">Se añaden a la lista de votación con un clic. Si al final lo que ha salido en las mesas es más útil, quita estas con «Quitar».</p>`
             : ''
         }
       </section>
 
       <section class="tarjeta">
-        <div class="kicker">Ideas cargadas</div>
+        <div class="kicker">Necesidades y propuestas · ${ideas.length}</div>
+        <p class="entradilla">Lo que publica el grupo aparece aquí en cuanto se publica, y arriba del todo lo más votado. «Del grupo» son las necesidades que ha escrito la gente; «del taller», las que preparaste tú.</p>
         ${ideas
           .map(
             (i) => `<div class="tarjeta-mesa">
@@ -643,11 +644,12 @@ function pestanaIdeas() {
               <div class="fila-admin">
                 <span class="palanca ${i.votos ? 'activo' : ''}">${i.votos} voto(s)</span>
                 <span class="nota">${escapar(i.categoria || '')}</span>
+                <span class="estado-moderacion estado-${i.estado}">${i.origen === 'participante' ? 'del grupo' : 'del taller'}</span>
                 <button type="button" class="chip" data-borrar-idea="${escapar(i.id)}" style="margin-left:auto">Quitar</button>
               </div>
             </div>`
           )
-          .join('') || '<p class="nota">Todavía no hay ideas cargadas.</p>'}
+          .join('') || '<p class="nota">Todavía no hay necesidades publicadas.</p>'}
       </section>
     </div>`;
 }
@@ -683,6 +685,7 @@ function pestanaModeracion() {
   const bloque = (t) => `<div class="texto-moderar">
     <div class="meta">
       ${escapar(t.campo)}${t.caso ? ` · caso ${t.caso}` : ''}${t.mesa ? ` · ${escapar(t.mesa)}` : ''}
+      ${t.publicada ? ' · publicada en la app' : ''}
     </div>
     <div class="contenido">${escapar(t.texto)}</div>
     <div class="fila-admin">
@@ -700,10 +703,22 @@ function pestanaModeracion() {
     </div>
   </div>`;
 
+  const necesidadesPendientes = pendientes.filter((t) => t.campo === 'reto');
+
   return `
     <section class="tarjeta">
       <div class="kicker">Pendientes de revisión · ${pendientes.length}</div>
       <p class="nota">El texto libre no se exporta a la Red Solidaria hasta que se aprueba aquí. Antes de aprobar, comprueba que no hay nombres, datos de contacto ni detalles identificables.</p>
+      ${
+        necesidadesPendientes.length
+          ? `<div class="acciones" style="margin:.6rem 0">
+               <button type="button" class="boton boton-linea" id="btn-aprobar-necesidades">
+                 Aprobar las ${necesidadesPendientes.length} necesidades publicadas
+               </button>
+               <span class="nota">Están a la vista en la app y en la pantalla del ponente. Apruébalas si están bien para el informe.</span>
+             </div>`
+          : ''
+      }
       ${pendientes.map(bloque).join('') || '<p class="nota">No hay textos pendientes.</p>'}
     </section>
 
@@ -812,7 +827,7 @@ function pestanaProyector() {
           .map(([k, v]) => barra(k, v, max))
           .join('')}
       </div>
-      ${ideas.length ? `<h3 style="margin-top:1.6rem">Ideas fuerza</h3><div style="margin-top:.6rem">${ideas.map((i) => barra(i.texto, i.votos, max)).join('')}</div>` : ''}
+      ${ideas.length ? `<h3 style="margin-top:1.6rem">Necesidades más votadas</h3><div style="margin-top:.6rem">${ideas.map((i) => barra(i.texto, i.votos, max)).join('')}</div>` : ''}
       <p style="margin-top:1.6rem;color:#dae6ee;font-size:.9rem">
         ${r.participantes} participantes · ${Object.values(r.casos || {}).reduce((a, c) => a + c.respuestas, 0)} respuestas de casos
       </p>
@@ -1007,6 +1022,21 @@ function conectarPestana() {
           body: { abierta: !estado.resumen.votacionAbierta }
         });
         await cargar();
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+  }
+
+  // Aprobar de una vez todas las necesidades publicadas.
+  const btnAprobarNecesidades = $('#btn-aprobar-necesidades');
+  if (btnAprobarNecesidades) {
+    btnAprobarNecesidades.addEventListener('click', async () => {
+      if (!confirm('¿Aprobar todas las necesidades publicadas para que puedan ir en el informe?')) return;
+      try {
+        const respuesta = await api('/api/admin/textos/aprobar-necesidades', { method: 'POST', body: {} });
+        await cargar();
+        alert(`Aprobadas ${respuesta.resultado.aprobadas} necesidades.`);
       } catch (error) {
         alert(error.message);
       }

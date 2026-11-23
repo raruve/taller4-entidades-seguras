@@ -234,18 +234,36 @@ function pintarRetos(datos) {
   </section>`;
 }
 
+/**
+ * Necesidades del sector.
+ *
+ * Se muestran ordenadas por votos: arriba del todo, las más votadas. Es la
+ * vista que se proyecta, así que el texto va en grande y el recuento, al
+ * lado. Los votos del público se ven en directo; el número de participantes
+ * que ha publicado cada necesidad no se enseña (eso lo lleva el control de
+ * la sala, no la pantalla).
+ */
 function pintarIdeas(datos) {
-  const ideas = (datos.ideas || []).slice().sort((a, b) => b.votos - a.votos).slice(0, 6);
+  const ideas = (datos.ideas || []).slice().sort((a, b) => b.votos - a.votos).slice(0, 8);
+  const totalVotos = (datos.ideas || []).reduce((suma, i) => suma + (i.votos || 0), 0);
   if (!ideas.length) {
-    return bloqueVacio('Ideas fuerza', datos.votacionAbierta ? 'Votación abierta' : 'La votación aún no se ha abierto');
+    return bloqueVacio(
+      'Necesidades del sector',
+      datos.votacionAbierta ? 'Votación abierta' : 'Todavía no hay necesidades publicadas'
+    );
   }
   return `<section class="bloque-panel">
-    <h2>Ideas fuerza</h2>
-    <p class="sub">${datos.votacionAbierta ? 'Votación abierta' : 'Propuestas cargadas'}</p>
+    <h2>Necesidades del sector</h2>
+    <p class="sub">${
+      datos.votacionAbierta
+        ? `Votación abierta · ${ideas.length} necesidades · ${totalVotos} votos`
+        : `${ideas.length} necesidades · ${totalVotos} votos · las más votadas primero`
+    }</p>
     ${ideas
       .map(
         (i) => `<div class="idea-panel">
-          <span>${escapar(i.texto)}</span>
+          <span class="idea-texto">${escapar(i.texto)}</span>
+          <span class="idea-meta"><span class="idea-tema">${escapar(i.categoria || 'General')}</span></span>
           <span class="votos">${i.votos} ${i.votos === 1 ? 'voto' : 'votos'}</span>
         </div>`
       )

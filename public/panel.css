@@ -428,21 +428,47 @@ body.panel-ponente {
 /* --- Ideas --- */
 
 .idea-panel {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: baseline;
-  gap: 0.8rem;
-  padding: 0.4rem 0;
+  gap: 0.2rem 0.8rem;
+  padding: 0.45rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   font-size: 0.85rem;
   color: var(--blanco);
 }
 
+.idea-panel .idea-texto {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.idea-panel .idea-meta {
+  grid-column: 1;
+}
+
+.idea-panel .idea-tema {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--azul-claro);
+}
+
 .idea-panel .votos {
-  flex: 0 0 auto;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--coral);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* --- Código QR de acceso (esquina inferior derecha) --- */

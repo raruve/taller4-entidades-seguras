@@ -116,7 +116,7 @@ export const OBJETIVOS = [
 export const RESULTADOS_ESPERADOS = [
   'Cada entidad sale con un autodiagnóstico básico y tres acciones prioritarias adaptadas a su realidad.',
   'Pautas sencillas para el uso responsable de la IA que pueden trasladarse a sus equipos y voluntariado.',
-  'Un mapa de retos y necesidades comunes para la Red Solidaria y las dos ideas fuerza para el cierre.'
+  'Un mapa de retos y necesidades comunes para la Red Solidaria y las necesidades más votadas para el cierre.'
 ];
 
 /**
@@ -170,7 +170,7 @@ export const AGENDA = [
   { min: 20, titulo: 'Casos en mesas', detalle: 'Un escenario real por mesa', vista: 'mesas' },
   { min: 25, titulo: 'Puesta en común', detalle: 'Respuesta práctica a cada caso' },
   { min: 10, titulo: 'Semáforo', detalle: '10 medidas y 3 prioridades', vista: 'semaforo' },
-  { min: 10, titulo: 'Retos e ideas fuerza', detalle: 'Votación en directo', vista: 'retos' }
+  { min: 10, titulo: 'Necesidades del sector', detalle: 'Publicación y votación en directo', vista: 'retos' }
 ];
 
 export const TERMOMETRO = [
@@ -400,7 +400,7 @@ export function infoLegalLarga(legal, evento, retentionDays, enlace) {
     {
       titulo: 'Finalidades',
       texto:
-        'a) Dinámica de la sesión del taller: termómetro digital, respuestas de los casos en mesas, autodiagnóstico «semáforo» y recogida de retos e ideas fuerza. b) Elaboración de la pieza de conocimiento agregada de la Red Solidaria.'
+        'a) Dinámica de la sesión del taller: termómetro digital, respuestas de los casos en mesas, autodiagnóstico «semáforo» y recogida de las necesidades del sector. b) Elaboración de la pieza de conocimiento agregada de la Red Solidaria.'
     },
     {
       titulo: 'Base jurídica',

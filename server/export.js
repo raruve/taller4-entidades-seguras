@@ -110,10 +110,14 @@ export function datosAgregados(resumen) {
       suprimido: n < MIN_N
     });
   }
+  // Necesidades del sector. Solo entran las aprobadas: las que escribió el
+  // equipo del taller (valen como aprobadas) y las que la persona
+  // dinamizadora ha revisado en la moderación.
   for (const idea of resumen.ideas || []) {
+    if (idea.origen === 'participante' && idea.estado !== 'aprobado') continue;
     const n = idea.votos || 0;
     filas.push({
-      bloque: 'Ideas fuerza · votación',
+      bloque: 'Necesidades del sector · votación',
       pregunta: idea.texto,
       opcion: idea.categoria || 'Sin categoría',
       respuestas: n,

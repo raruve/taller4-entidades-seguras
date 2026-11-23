@@ -282,7 +282,16 @@ async function api(req, res, ruta, url) {
     const votacionAbierta = store.estado.config.votacionAbierta;
     responderJson(res, {
       votacionAbierta,
-      ideas: ideas.map((i) => ({ id: i.id, texto: i.texto, categoria: i.categoria })),
+      // Necesidades y propuestas que se pueden votar. Mientras la votación
+      // está abierta no se manda el número de votos, para que el recuento
+      // no influya en el voto de quien llega tarde.
+      ideas: ideas.map((i) => ({
+        id: i.id,
+        texto: i.texto,
+        categoria: i.categoria,
+        origen: i.origen || 'facilitacion',
+        creada: i.creada || null
+      })),
       resultados: votacionAbierta ? null : ideas.map((i) => ({ id: i.id, votos: store.estado.agregados.votos[i.id] || 0 }))
     });
     return;
@@ -404,7 +413,7 @@ async function admin(req, res, ruta, url) {
     }
     if (metodo === 'POST') {
       const cuerpo = await leerCuerpo(req);
-      responderJson(res, { idea: await store.anadirIdea(cuerpo) });
+      responderJson(res, { idea: await store.anadirIdea({ ...cuerpo, origen: 'facilitacion' }) });
       return;
     }
   }
@@ -420,6 +429,11 @@ async function admin(req, res, ruta, url) {
     const cuerpo = await leerCuerpo(req);
     const abierta = await store.abrirVotacion(cuerpo.abierta);
     responderJson(res, { votacionAbierta: abierta });
+    return;
+  }
+
+  if (sub === 'textos/aprobar-necesidades' && metodo === 'POST') {
+    responderJson(res, { resultado: await store.aprobarNecesidades() });
     return;
   }
 

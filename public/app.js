@@ -7,6 +7,8 @@
    necesario para poder retomar la respuesta si se recarga la página.
    ================================================================== */
 
+import { detectarDatosPersonales } from '/comun/datos.js';
+
 const ALFABETO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sin caracteres ambiguos
 
 const VISTAS = ['inicio', 'termometro', 'mesas', 'semaforo', 'retos', 'cierre'];
@@ -15,10 +17,14 @@ const estado = {
   config: null,
   codigo: null,
   vista: 'inicio',
-  respuestas: { termometro: null, mesa: null, semaforo: null, retos: null },
+  respuestas: { termometro: null, mesa: null, semaforo: null, retos: null, votacion: null },
   mesas: [],
   ideas: [],
+  resultadosIdeas: [],
   votacionAbierta: false,
+  // Voto en curso (aún no confirmado) y borrador de la necesidad.
+  voto: { seleccionadas: [], confirmado: false },
+  borrador: { reto: '' },
   cargando: false
 };
 
@@ -90,17 +96,6 @@ async function api(ruta, opciones = {}) {
  * Detector de posible información personal en texto libre.
  * No sustituye a la revisión del dinamizador: solo avisa en el momento.
  */
-function detectarDatosPersonales(texto) {
-  const avisos = [];
-  if (!texto) return avisos;
-  if (/\b[\w.%+-]+@[\w.-]+\.[a-z]{2,}\b/i.test(texto)) avisos.push('parece un correo electrónico');
-  if (/(?:\+34[\s-]?)?\b[6-9]\d{2}[\s-]?\d{3}[\s-]?\d{3}\b/.test(texto)) avisos.push('parece un teléfono');
-  if (/\b(?:\d{8}|\d{9}|IBAN|ES\d{2}[\s\d]{20})\b/i.test(texto)) avisos.push('parece un número de cuenta o IBAN');
-  if (/https?:\/\//i.test(texto)) avisos.push('contiene un enlace web');
-  if (/\b\d{1,3}\s+de\s+\d{4}\s+de\s+\d{4}\b/.test(texto)) avisos.push('parece una fecha completa');
-  return avisos;
-}
-
 /* ------------------------------------------------------------------
    Navegación
    ------------------------------------------------------------------ */
@@ -108,6 +103,7 @@ function detectarDatosPersonales(texto) {
 function irA(vista, { reemplazar = false } = {}) {
   if (!VISTAS.includes(vista)) vista = 'inicio';
   estado.vista = vista;
+  vigilarNecesidades();
   const hash = `#/${vista}`;
   if (location.hash !== hash) {
     if (reemplazar) history.replaceState(null, '', hash);
@@ -455,68 +451,117 @@ function guardadasPrioridades(lista) {
 }
 
 /* ------------------------------------------------------------------
-   Vista: retos e ideas fuerza
+   Vista: necesidades del sector
    ------------------------------------------------------------------ */
 
 function vistaRetos() {
   const c = estado.config;
   const guardado = estado.respuestas.retos || {};
   const categorias = guardado.categorias || [];
+  const redacto = estado.borrador.reto || guardado.reto || '';
 
+  // El área donde más se necesita apoyo es una sola: es el tema de la
+  // necesidad y así el recuento por áreas se puede sumar sin duplicados.
   const chips = c.categoriasReto
     .map(
-      (cat) => `<button type="button" class="chip" data-categoria="${escapar(cat)}"
+      (cat) => `<button type="button" class="chip chip-tema" data-categoria="${escapar(cat)}"
         aria-pressed="${categorias.includes(cat)}">${escapar(cat)}</button>`
     )
     .join('');
 
-  const bloqueVotacion = estado.votacionAbierta
-    ? `<section class="tarjeta">
-        <div class="kicker">Ideas fuerza · votación abierta</div>
-        <h2>Elegid las dos ideas fuerza</h2>
-        <p class="entradilla">De entre las propuestas recogidas en las mesas, seleccionad las dos que más pesan.</p>
-        <div class="chips">${estado.ideas
-          .map(
-            (i) => `<button type="button" class="chip" data-idea="${escapar(i.id)}"
-              aria-pressed="false">${escapar(i.texto)}</button>`
-          )
-          .join('')}</div>
-        <div id="aviso-voto"></div>
-        <button type="button" class="boton boton-primario" id="btn-votar" style="margin-top:.8rem">Confirmar mi voto</button>
-      </section>`
-    : `<section class="tarjeta">
-        <div class="kicker">Ideas fuerza</div>
-        <h2>Las dos ideas fuerza del taller</h2>
-        <p class="entradilla">La votación se abre al final de la sesión. ${estado.ideas.length ? '' : 'Todavía no hay propuestas cargadas.'}</p>
-        ${estado.ideas.length
-          ? `<ul class="agenda">${estado.ideas
-              .map(
-                (i) => `<li><span class="min">★</span><span>${escapar(i.texto)}<span class="detalle">${escapar(i.categoria || '')}</span></span></li>`
-              )
-              .join('')}</ul>`
-          : ''}
-      </section>`;
-
+  const bloqueNecesidades = bloqueNecesidadesHtml();
   return `
     <section class="tarjeta">
-      <div class="kicker">Retos e ideas fuerza · 10 min</div>
+      <div class="kicker">Necesidades del sector · 10 min</div>
       <h2>¿Qué necesita el sector?</h2>
-      <p class="entradilla">Marcad las áreas donde más necesitáis apoyo. Vuestras respuestas alimentan la agenda de la Red Solidaria para 2027.</p>
+      <p class="entradilla">Escribid la necesidad que habéis detectado: se publica en la app en el acto y todos los asistentes pueden verla y votarla desde su móvil. Vuestras necesidades alimentan la agenda de la Red Solidaria para 2027.</p>
+      <p class="campo" style="margin-bottom:.4rem"><strong>¿En qué área necesitáis más apoyo?</strong></p>
       <div class="chips">${chips}</div>
 
       <div class="campo-bloque" style="margin-top:1rem">
-        <label class="campo" for="campo-reto">¿Cuál es vuestro reto principal? (opcional)</label>
-        <textarea id="campo-reto" rows="3" maxlength="400" placeholder="Una frase, sin nombres ni datos concretos.">${escapar(guardado.reto || '')}</textarea>
-        <div class="contador" data-contador="reto">0 / 400</div>
+        <label class="campo" for="campo-reto">Vuestra necesidad (se publica en la app)</label>
+        <textarea id="campo-reto" rows="3" maxlength="200" placeholder="Una frase, sin nombres ni datos concretos.">${escapar(redacto)}</textarea>
+        <div class="contador" data-contador="reto">0 / 200</div>
         <div class="alerta-datos" data-alerta="reto" hidden></div>
       </div>
 
       <div class="caja-aviso">${escapar(c.aviso)}</div>
       <div id="aviso-retos"></div>
-      <button type="button" class="boton boton-primario" id="btn-guardar-retos">Guardar retos</button>
+      <button type="button" class="boton boton-primario" id="btn-publicar-necesidad">Publicar necesidad</button>
     </section>
-    ${bloqueVotacion}
+    ${bloqueNecesidades}
     ${pieHtml()}`;
+}
+
+/**
+ * Lista de necesidades del grupo.
+ *
+ * Mientras la votación está abierta se ven las necesidades y se vota, pero
+ * no se enseña el recuento (para que a quien llega tarde no le influya).
+ * Cuando la votación se cierra, el recuento aparece y la lista se ordena
+ * por votos: arriba del todo, las más votadas.
+ */
+function bloqueNecesidadesHtml() {
+  const abierta = estado.votacionAbierta;
+  const votos = Object.fromEntries((estado.resultadosIdeas || []).map((r) => [r.id, r.votos || 0]));
+  const lista = estado.ideas
+    .slice()
+    .sort((a, b) => {
+      if (!abierta) return (votos[b.id] || 0) - (votos[a.id] || 0);
+      return String(b.creada || '').localeCompare(String(a.creada || ''));
+    });
+
+  const elegidas = estado.voto.seleccionadas;
+  const items = lista
+    .map((i) => {
+      const marcada = elegidas.includes(i.id);
+      const numero = votos[i.id] || 0;
+      return `<li class="necesidad${marcada ? ' elegida' : ''}">
+        <div class="necesidad-cabecera">
+          <span class="necesidad-tema">${escapar(i.categoria || 'General')}</span>
+          ${abierta ? '' : `<span class="necesidad-votos">${numero} ${numero === 1 ? 'voto' : 'votos'}</span>`}
+        </div>
+        <p class="necesidad-texto">${escapar(i.texto)}</p>
+        ${
+          abierta
+            ? `<button type="button" class="boton-voto" data-idea="${escapar(i.id)}" aria-pressed="${marcada}">${
+                marcada ? '✓ Votada' : 'Votar esta necesidad'
+              }</button>`
+            : ''
+        }
+      </li>`;
+    })
+    .join('');
+
+  return `<section class="tarjeta" id="bloque-necesidades">
+      <div class="kicker">${abierta ? 'Votación abierta' : 'Necesidades del grupo'}</div>
+      <h2>${abierta ? 'Votad las necesidades' : 'Las necesidades recogidas'}</h2>
+      <p class="entradilla">${
+        abierta
+          ? 'Elegid hasta dos necesidades: las que veáis más necesarias para el sector. Después de la votación se publicarán las más votadas.'
+          : estado.ideas.length
+            ? 'Estas son las necesidades que ha publicado el grupo. La votación se abre al final de la sesión.'
+            : 'Todavía no hay necesidades publicadas. En cuanto el grupo las vaya publicando, aparecerán aquí.'
+      }</p>
+      ${lista.length ? `<ul class="lista-necesidades">${items}</ul>` : ''}
+      <div class="acciones" style="margin-top:.8rem">
+        <button type="button" class="boton boton-linea" id="btn-refrescar-necesidades">Actualizar la lista</button>
+        <span class="nota">La lista se actualiza sola cada 10 segundos.</span>
+      </div>
+      <div id="aviso-voto"></div>
+      ${
+        abierta
+          ? `<div class="barra-voto">
+               <span class="barra-voto-info">${
+                 elegidas.length
+                   ? `${elegidas.length} de 2 elegidas`
+                   : 'Elige hasta dos necesidades'
+               }</span>
+               <button type="button" class="boton boton-primario" id="btn-votar">Confirmar mi voto</button>
+             </div>`
+          : ''
+      }
+    </section>`;
 }
 
 /* ------------------------------------------------------------------
@@ -627,6 +672,9 @@ function conectarEventos() {
     const id = area.dataset.campo || 'reto';
     const limite = area.getAttribute('maxlength');
     const actualizar = () => {
+      // El borrador se guarda en el estado: si se repinta la pantalla, lo
+      // que se estaba escribiendo no se pierde.
+      if (id === 'reto') estado.borrador.reto = area.value;
       const contador = $(`[data-contador="${id}"]`);
       if (contador) contador.textContent = `${area.value.length} / ${limite}`;
       const alerta = $(`[data-alerta="${id}"]`);
@@ -634,7 +682,7 @@ function conectarEventos() {
         const avisos = detectarDatosPersonales(area.value);
         alerta.hidden = avisos.length === 0;
         alerta.textContent = avisos.length
-          ? `Revisa esto antes de enviar: ${avisos.join(', ')}. La app avisa, pero la revisión final la hace la dinamización.`
+          ? `Revisa esto antes de publicar: ${avisos.join(', ')}. La app avisa, pero la revisión final la hace la dinamización.`
           : '';
       }
     };
@@ -684,36 +732,50 @@ function conectarEventos() {
   const btnGuardarSemaforo = $('#btn-guardar-semaforo');
   if (btnGuardarSemaforo) btnGuardarSemaforo.addEventListener('click', guardarSemaforo);
 
-  const btnGuardarRetos = $('#btn-guardar-retos');
-  if (btnGuardarRetos) btnGuardarRetos.addEventListener('click', guardarRetos);
+  const btnPublicar = $('#btn-publicar-necesidad');
+  if (btnPublicar) btnPublicar.addEventListener('click', publicarNecesidad);
 
+  // El tema de la necesidad es uno solo.
   $$('[data-categoria]').forEach((chip) => {
     chip.addEventListener('click', () => {
       const guardado = estado.respuestas.retos || { categorias: [], reto: '' };
-      const categorias = [...(guardado.categorias || [])];
       const cat = chip.dataset.categoria;
-      const i = categorias.indexOf(cat);
-      if (i >= 0) categorias.splice(i, 1);
-      else categorias.push(cat);
+      const yaEsta = (guardado.categorias || [])[0] === cat;
+      const categorias = yaEsta ? [] : [cat];
       estado.respuestas.retos = { ...guardado, categorias };
       render();
     });
   });
 
-  $$('[data-idea]').forEach((chip) => {
-    chip.addEventListener('click', () => {
-      const pressed = chip.getAttribute('aria-pressed') === 'true';
-      const marcadas = $$('[data-idea][aria-pressed="true"]');
-      if (!pressed && marcadas.length >= 2) {
-        mostrarAviso('#aviso-voto', 'Solo puedes elegir dos ideas fuerza.', 'error');
-        return;
+  // Votar una necesidad: se pueden elegir dos.
+  $$('[data-idea]').forEach((boton) => {
+    boton.addEventListener('click', () => {
+      const id = boton.dataset.idea;
+      const seleccionadas = estado.voto.seleccionadas;
+      if (seleccionadas.includes(id)) {
+        estado.voto.seleccionadas = seleccionadas.filter((x) => x !== id);
+      } else {
+        if (seleccionadas.length >= 2) {
+          mostrarAviso('#aviso-voto', 'Solo puedes votar dos necesidades. Desmarca una para cambiarla.', 'error');
+          return;
+        }
+        estado.voto.seleccionadas = [...seleccionadas, id];
       }
-      chip.setAttribute('aria-pressed', String(!pressed));
+      render();
     });
   });
 
   const btnVotar = $('#btn-votar');
   if (btnVotar) btnVotar.addEventListener('click', enviarVotacion);
+
+  const btnRefrescar = $('#btn-refrescar-necesidades');
+  if (btnRefrescar) {
+    btnRefrescar.addEventListener('click', async () => {
+      btnRefrescar.disabled = true;
+      await cargarIdeas();
+      render();
+    });
+  }
 }
 
 function mostrarAviso(selector, texto, tipo = 'ok') {
@@ -836,34 +898,59 @@ function descargarAutodiagnostico() {
   }
 }
 
-async function guardarRetos() {
+async function publicarNecesidad() {
   const guardado = estado.respuestas.retos || { categorias: [], reto: '' };
-  const reto = $('#campo-reto') ? $('#campo-reto').value : guardado.reto || '';
-  if ((guardado.categorias || []).length === 0 && !reto.trim()) {
-    mostrarAviso('#aviso-retos', 'Marca al menos una categoría o escribe un reto.', 'error');
+  const campo = $('#campo-reto');
+  const reto = campo ? campo.value : guardado.reto || '';
+  if (!reto.trim()) {
+    mostrarAviso('#aviso-retos', 'Escribid vuestra necesidad para poder publicarla.', 'error');
+    return;
+  }
+  if ((guardado.categorias || []).length === 0) {
+    mostrarAviso('#aviso-retos', 'Elegid el área donde más necesitáis apoyo.', 'error');
     return;
   }
   try {
-    estado.respuestas.retos = await api('/api/respuestas/retos', {
+    const respuesta = await api('/api/respuestas/retos', {
       method: 'POST',
       body: { categorias: guardado.categorias || [], reto }
     });
-    mostrarAviso('#aviso-retos', '¡Gracias! Vuestros retos alimentan la agenda de la Red Solidaria para 2027.', 'ok');
+    estado.respuestas.retos = { ...respuesta };
+    estado.borrador.reto = '';
+    // La necesidad recién publicada entra en la lista sin esperar al refresco.
+    if (respuesta.idea && !estado.ideas.some((i) => i.id === respuesta.idea.id)) {
+      estado.ideas = [...estado.ideas, respuesta.idea];
+    }
+    render();
+    mostrarAviso(
+      '#aviso-retos',
+      '¡Publicada! Ya la ven todos los asistentes y pueden votarla. Editad el texto y volváis a publicar para corregirla.',
+      'ok'
+    );
   } catch (error) {
     mostrarAviso('#aviso-retos', error.message, 'error');
   }
 }
 
 async function enviarVotacion() {
-  const ideas = $$('[data-idea][aria-pressed="true"]').map((c) => c.dataset.idea);
-  if (ideas.length !== 2) {
-    mostrarAviso('#aviso-voto', 'Elige exactamente dos ideas fuerza.', 'error');
+  const ideas = estado.voto.seleccionadas.slice();
+  if (ideas.length === 0) {
+    mostrarAviso('#aviso-voto', 'Votad al menos una necesidad.', 'error');
+    return;
+  }
+  if (ideas.length > 2) {
+    mostrarAviso('#aviso-voto', 'Solo puedes votar dos necesidades.', 'error');
     return;
   }
   try {
-    await api('/api/respuestas/votacion', { method: 'POST', body: { ideas } });
-    mostrarAviso('#aviso-voto', 'Voto registrado. Gracias.', 'ok');
-    $$('[data-idea]').forEach((c) => c.setAttribute('aria-pressed', 'false'));
+    const respuesta = await api('/api/respuestas/votacion', { method: 'POST', body: { ideas } });
+    estado.respuestas.votacion = respuesta;
+    estado.voto.confirmado = true;
+    mostrarAviso(
+      '#aviso-voto',
+      'Voto registrado. Gracias. Podéis cambiarlo hasta que se cierre la votación.',
+      'ok'
+    );
   } catch (error) {
     mostrarAviso('#aviso-voto', error.message, 'error');
   }
@@ -886,6 +973,7 @@ async function cargarIdeas() {
   try {
     const datos = await api('/api/ideas');
     estado.ideas = datos.ideas || [];
+    estado.resultadosIdeas = datos.resultados || [];
     estado.votacionAbierta = Boolean(datos.votacionAbierta);
   } catch {
     estado.ideas = [];
@@ -900,8 +988,15 @@ async function recuperar() {
         termometro: datos.termometro || null,
         mesa: datos.mesa || null,
         semaforo: datos.semaforo || null,
-        retos: datos.retos || null
+        retos: datos.retos || null,
+        votacion: datos.votacion || null
       };
+      // Si esta sesión ya había votado, se recupera el voto para que no
+      // haya que volver a hacerlo (ni se cuente dos veces).
+      if (datos.votacion && Array.isArray(datos.votacion.ideas)) {
+        estado.voto.seleccionadas = datos.votacion.ideas.slice();
+        estado.voto.confirmado = true;
+      }
     }
   } catch {
     /* si no se puede recuperar, se empieza de cero */
@@ -934,12 +1029,34 @@ async function iniciar() {
 
   estado.vista = vistaDeHash();
   render();
+  vigilarNecesidades();
 }
 
 window.addEventListener('popstate', () => {
   estado.vista = vistaDeHash();
   render();
 });
+
+/**
+ * Mientras se está en la pantalla de necesidades, se refresca la lista cada
+ * pocos segundos: las necesidades que publica el resto del grupo tienen que
+ * aparecer en el móvil sin que nadie recargue la página.
+ */
+let temporizadorNecesidades = null;
+function vigilarNecesidades() {
+  if (temporizadorNecesidades) {
+    clearInterval(temporizadorNecesidades);
+    temporizadorNecesidades = null;
+  }
+  if (estado.vista !== 'retos') return;
+  temporizadorNecesidades = setInterval(async () => {
+    const antes = estado.ideas.length;
+    await cargarIdeas();
+    // Solo se repinta si ha cambiado algo, para no perder el texto que se
+    // esté escribiendo ni la posición de la pantalla.
+    if (estado.ideas.length !== antes) render();
+  }, 10000);
+}
 
 $('#btn-atras').addEventListener('click', () => {
   const indice = VISTAS.indexOf(estado.vista);

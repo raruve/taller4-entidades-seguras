@@ -68,8 +68,10 @@ en la que se borrarán los datos brutos.
    detector de posibles datos personales.
 4. **Semáforo** — diez medidas en verde/ámbar/rojo y tres prioridades, con
    hoja imprimible descargable.
-5. **Retos e ideas fuerza** — categorías predefinidas, reto opcional y
-   votación en directo de las dos ideas fuerza.
+5. **Necesidades del sector** — cada entidad elige el área donde más
+   necesita apoyo y escribe su necesidad. La necesidad **se publica en el acto
+   en el móvil de todo el mundo** y se puede votar; el recuento se proyecta en
+   la pantalla del ponente, con las más votadas arriba del todo.
 6. **Cierre** — los cuatro mensajes para recordar y las prioridades propias.
 
 ### Para el equipo dinamizador (`/admin`)
@@ -80,7 +82,7 @@ en la que se borrarán los datos brutos.
   normativa (no se proyecta).
 - Configuración de mesas y asignación de casos.
 - Respuestas por mesa y **guía de resolución** de los cuatro casos.
-- Preparación de las ideas fuerza y apertura de la votación.
+- Las necesidades se publican solas; solo hay que abrir la votación.
 - Revisión (aprobación/rechazo) de todos los textos libres.
 - Exportaciones para la Red Solidaria (CSV y JSON).
 - Código QR de acceso, cartela A4 imprimible, registro de auditoría y borrado
@@ -138,6 +140,7 @@ app/
 │   ├── app.js        lógica de la app de participantes
 │   ├── admin.js      lógica del panel
 │   ├── panel.js      lógica del panel del ponente
+│   ├── comun/datos.js filtro de datos personales (compartido con el servidor)
 │   └── styles.css    sistema visual (paleta «PLL 2024»)
 ├── test/
 │   ├── qr.test.js    verificación del codificador de QR
