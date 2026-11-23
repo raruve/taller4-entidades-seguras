@@ -141,6 +141,10 @@ function pintarPasos() {
 function pintarNavegacion() {
   const nav = $('#nav-inferior');
   const indice = VISTAS.indexOf(estado.vista);
+  // El botón de inicio solo aparece cuando no estás ya en el inicio: sirve
+  // para volver atrás desde cualquier pantalla (por ejemplo, tras saltar al
+  // semáforo desde la portada).
+  $('#btn-inicio').hidden = estado.vista === 'inicio';
   if (estado.vista === 'inicio' || estado.vista === 'cierre') {
     nav.hidden = true;
     return;
@@ -181,9 +185,19 @@ function vistaInicio() {
 
   const agenda = c.agenda
     .map((a) => {
-      const destino = a.vista || '';
+      // Solo los momentos con contenido en la app se pueden tocar; los que
+      // dirige el ponente se muestran como texto plano.
+      if (!a.vista) {
+        return `<li class="agenda-sin-boton">
+          <span class="min">${a.min}′</span>
+          <span class="texto-agenda">
+            <strong>${escapar(a.titulo)}</strong>
+            <span class="detalle">${escapar(a.detalle)}</span>
+          </span>
+        </li>`;
+      }
       return `<li>
-        <button type="button" class="agenda-enlace" data-ir="${escapar(destino)}"${destino ? '' : ' disabled'}>
+        <button type="button" class="agenda-enlace" data-ir="${escapar(a.vista)}">
           <span class="min">${a.min}′</span>
           <span class="texto-agenda">
             <strong>${escapar(a.titulo)}</strong>
@@ -203,7 +217,7 @@ function vistaInicio() {
 
       <div class="tarjeta">
         <div class="kicker">Cómo va a funcionar</div>
-        <p class="nota intro-agenda">Toca un momento para ir directamente a esa parte del taller.</p>
+        <p class="nota intro-agenda">Los momentos con flecha te llevan a esa parte del taller.</p>
         <ul class="agenda">${agenda}</ul>
         <div class="sellos">
           <span class="sello">Sin registro</span>
@@ -930,6 +944,10 @@ window.addEventListener('popstate', () => {
 $('#btn-atras').addEventListener('click', () => {
   const indice = VISTAS.indexOf(estado.vista);
   irA(VISTAS[Math.max(1, indice - 1)]);
+});
+
+$('#btn-inicio').addEventListener('click', () => {
+  irA('inicio');
 });
 
 $('#btn-siguiente').addEventListener('click', () => {

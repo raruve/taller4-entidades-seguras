@@ -87,8 +87,17 @@ comprobar(await page.locator('.titulo-grande').isVisible(), 'Se muestra el títu
 comprobar(await page.locator('#codigo-sesion').isVisible(), 'Se muestra el código de sesión');
 comprobar((await page.locator('.agenda li').count()) === 6, 'La agenda muestra los 6 momentos');
 comprobar(
-  (await page.locator('.agenda-enlace[data-ir]').count()) === 6,
-  'Los 6 momentos de la agenda son navegables'
+  (await page.locator('.agenda-enlace[data-ir]').count()) === 4,
+  'Solo los 4 momentos con contenido en la app son navegables'
+);
+comprobar(
+  (await page.locator('.agenda-sin-boton').count()) === 2,
+  '«Lo esencial» y «Puesta en común» no tienen botón activable'
+);
+const sinBoton = await page.locator('.agenda-sin-boton strong').allInnerTexts();
+comprobar(
+  sinBoton.join('|') === 'Lo esencial|Puesta en común',
+  `Los dos momentos sin botón son los correctos (${sinBoton.join(', ')})`
 );
 comprobar((await page.locator('.organiza').count()) === 0, 'Ya no aparece el bloque de marca en cabecera');
 comprobar((await page.locator('.pie div').count()) === 0, 'El pie solo conserva el logo');
@@ -103,9 +112,9 @@ await captura(page, 'inicio');
 console.log('\n▸ Saltar a cada sección desde el inicio');
 const SALTOS = [
   { indice: 0, esperado: 'termometro', nombre: 'Termómetro digital' },
-  { indice: 1, esperado: 'mesas', nombre: 'Lo esencial' },
-  { indice: 4, esperado: 'semaforo', nombre: 'Semáforo' },
-  { indice: 5, esperado: 'retos', nombre: 'Retos e ideas fuerza' }
+  { indice: 1, esperado: 'mesas', nombre: 'Casos en mesas' },
+  { indice: 2, esperado: 'semaforo', nombre: 'Semáforo' },
+  { indice: 3, esperado: 'retos', nombre: 'Retos e ideas fuerza' }
 ];
 for (const salto of SALTOS) {
   await page.goto(`${BASE}/#/inicio`, { waitUntil: 'networkidle' });
@@ -120,6 +129,31 @@ for (const salto of SALTOS) {
   await esperarHash(page, salto.esperado);
   comprobar(true, `«${salto.nombre}» salta a «${salto.esperado}»`);
 }
+
+console.log('\n▸ Volver al inicio desde cualquier pantalla');
+await page.goto(`${BASE}/#/inicio`, { waitUntil: 'networkidle' });
+await page.waitForSelector('.portada');
+comprobar(
+  await page.locator('#btn-inicio').isHidden(),
+  'En la portada no se muestra el botón de inicio'
+);
+await page.locator('.agenda-enlace[data-ir="semaforo"]').click();
+await esperarHash(page, 'semaforo');
+comprobar(
+  await page.locator('#btn-inicio').isVisible(),
+  'Al saltar a otra pantalla aparece el botón de inicio'
+);
+await captura(page, 'semaforo-con-boton-inicio');
+await page.click('#btn-inicio');
+await esperarHash(page, 'inicio');
+comprobar(
+  await page.locator('.portada').isVisible(),
+  'El botón de inicio devuelve a la portada'
+);
+comprobar(
+  await page.locator('#btn-inicio').isHidden(),
+  'Al volver a la portada, el botón de inicio se oculta'
+);
 
 console.log('\n▸ Información legal (art. 13)');
 await page.goto(`${BASE}/#/inicio`, { waitUntil: 'networkidle' });

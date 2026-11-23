@@ -159,15 +159,16 @@ export const VERIFICACIONES = [
  * Agenda del taller.
  *
  * `vista` indica la pantalla de la app a la que salta el participante cuando
- * toca ese momento desde la pantalla de inicio. Los dos bloques que dirige el
- * ponente («Lo esencial» y «Puesta en común») llevan a la pantalla de casos,
- * que es la que el participante usa a continuación y durante la puesta en común.
+ * toca ese momento desde la pantalla de inicio. Los bloques que dirige el
+ * ponente y que no tienen contenido en la app («Lo esencial» y «Puesta en
+ * común») se dejan sin `vista`: aparecen en la lista, pero sin botón, porque
+ * no hay a dónde saltar.
  */
 export const AGENDA = [
   { min: 10, titulo: 'Termómetro digital', detalle: 'Tres preguntas desde el móvil', vista: 'termometro' },
-  { min: 15, titulo: 'Lo esencial', detalle: 'Datos, ciberseguridad e IA, sin tecnicismos', vista: 'mesas' },
+  { min: 15, titulo: 'Lo esencial', detalle: 'Datos, ciberseguridad e IA, sin tecnicismos' },
   { min: 20, titulo: 'Casos en mesas', detalle: 'Un escenario real por mesa', vista: 'mesas' },
-  { min: 25, titulo: 'Puesta en común', detalle: 'Respuesta práctica a cada caso', vista: 'mesas' },
+  { min: 25, titulo: 'Puesta en común', detalle: 'Respuesta práctica a cada caso' },
   { min: 10, titulo: 'Semáforo', detalle: '10 medidas y 3 prioridades', vista: 'semaforo' },
   { min: 10, titulo: 'Retos e ideas fuerza', detalle: 'Votación en directo', vista: 'retos' }
 ];
