@@ -156,20 +156,26 @@ Para cada caso:
 
 ### 6 · Necesidades del sector (10 min)
 
-1. Cada entidad elige **el área donde más necesita apoyo** (formación, recursos
-   técnicos, asesoramiento jurídico, proveedores, financiación, cultura interna)
-   y escribe **su necesidad** en una frase.
-2. Al pulsar «Publicar necesidad», esa necesidad **aparece en el móvil de
-   todo el mundo** y se puede votar. No hay que hacer nada más: el listado se
-   refresca solo cada 10 segundos en cada móvil.
+1. La pantalla arranca con **las seis áreas del sector** (formación, recursos
+   técnicos, asesoramiento jurídico, proveedores, financiación y cultura
+   interna) propuestas como puntos de partida. Son **propuestas votables**, no
+   una casilla obligatoria.
+2. Cada entidad escribe **su necesidad** en una frase, sin tener que encajarla
+   en ninguna de las áreas, y pulsa «Publicar necesidad». Esa necesidad
+   **aparece en el móvil de todo el mundo** y se puede votar. No hay que hacer
+   nada más: el listado se refresca solo cada 10 segundos en cada móvil.
 3. Si quieres que entren necesidades que se han dicho en voz alta pero no se
    han escrito, puedes añadirlas tú desde el panel → **«Necesidades»**.
-4. Pulsa **«Abrir votación»**. Los participantes ven la lista y votan **dos**
-   necesidades. Mientras la votación está abierta no se enseña el recuento,
-   para que a quien llega tarde no le influya.
-5. Al cerrar el bloque, en la **pantalla del ponente** aparecen las
-   necesidades **ordenadas por votos, con las más votadas arriba del todo**.
-   Apunta las dos primeras: son las **ideas fuerza** del cierre.
+4. Pulsa **«Abrir votación»**. Los participantes ven la lista completa (áreas
+   y necesidades, al mismo nivel) y votan **dos**. Mientras la votación está
+   abierta no se enseña el recuento, para que a quien llega tarde no le influya.
+5. Al cerrar el bloque, en la **pantalla del ponente** aparece todo junto,
+   **ordenado por votos, con lo más votado arriba del todo**. Apunta las dos
+   primeras: son las **ideas fuerza** del cierre.
+
+**Un detalle del recuento:** cada participante vota dos elementos, así que el
+total de votos es el doble que el número de personas. Al comparar áreas con
+necesidades, mira el orden de la lista, no el total.
 
 **Sobre la protección de datos:** la necesidad se publica en el acto, así que
 la app la filtra automáticamente (si detecta un correo, un teléfono, un IBAN o

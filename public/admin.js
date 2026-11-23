@@ -375,19 +375,22 @@ function pestanaResultados() {
       </section>
 
       <section class="tarjeta">
-        <div class="kicker">Retos · por categoría</div>
-        ${Object.entries(r.retos || {})
-          .map(([c, n]) => barra(c, n, Math.max(1, ...Object.values(r.retos || {}))))
+        <div class="kicker">Áreas del sector · por votos</div>
+        ${(r.ideas || [])
+          .filter((i) => i.origen === 'area')
+          .sort((a, b) => b.votos - a.votos)
+          .map((i) => barra(i.categoria || i.texto, i.votos, Math.max(1, ...(r.ideas || []).map((x) => x.votos))))
           .join('') || '<p class="nota">Sin datos todavía.</p>'}
       </section>
 
       <section class="tarjeta">
         <div class="kicker">Necesidades del sector · votación</div>
         ${(r.ideas || [])
+          .filter((i) => i.origen !== 'area')
           .slice()
           .sort((a, b) => b.votos - a.votos)
           .map((i) => barra(i.texto, i.votos, Math.max(1, ...(r.ideas || []).map((x) => x.votos))))
-          .join('') || '<p class="nota">Todavía no hay ideas cargadas.</p>'}
+          .join('') || '<p class="nota">Todavía no hay necesidades publicadas.</p>'}
       </section>
     </div>
 
@@ -636,7 +639,7 @@ function pestanaIdeas() {
 
       <section class="tarjeta">
         <div class="kicker">Necesidades y propuestas · ${ideas.length}</div>
-        <p class="entradilla">Lo que publica el grupo aparece aquí en cuanto se publica, y arriba del todo lo más votado. «Del grupo» son las necesidades que ha escrito la gente; «del taller», las que preparaste tú.</p>
+        <p class="entradilla">Lo que publica el grupo aparece aquí en cuanto se publica, y arriba del todo lo más votado. «Área» son las propuestas iniciales del sector; «del grupo», las necesidades que ha escrito la gente; «del taller», las que preparaste tú.</p>
         ${ideas
           .map(
             (i) => `<div class="tarjeta-mesa">
@@ -644,7 +647,7 @@ function pestanaIdeas() {
               <div class="fila-admin">
                 <span class="palanca ${i.votos ? 'activo' : ''}">${i.votos} voto(s)</span>
                 <span class="nota">${escapar(i.categoria || '')}</span>
-                <span class="estado-moderacion estado-${i.estado}">${i.origen === 'participante' ? 'del grupo' : 'del taller'}</span>
+                <span class="estado-moderacion estado-${i.estado}">${i.origen === 'participante' ? 'del grupo' : i.origen === 'area' ? 'área' : 'del taller'}</span>
                 <button type="button" class="chip" data-borrar-idea="${escapar(i.id)}" style="margin-left:auto">Quitar</button>
               </div>
             </div>`

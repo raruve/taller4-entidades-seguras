@@ -30,6 +30,7 @@ import {
   SEMAFORO,
   TERMOMETRO,
   CATEGORIAS_RETO,
+  AREAS_SECTOR,
   IDEAS_INICIALES,
   BLOQUES,
   OBJETIVOS,
@@ -116,8 +117,35 @@ function cargar() {
 
   agregados = leerJson(FICHERO_AGREGADOS, { version: 1, termometro: {}, incidentes: {}, pautas: {}, semaforo: {}, prioridades: {}, retos: {}, casos: {}, votos: {}, participantes: 0 });
 
+  sembrarAreas();
   registrarAuditoria('ARRANQUE', { sesiones: Object.keys(respuestas.sesiones).length });
   marcarInicio();
+}
+
+/**
+ * Siembra las áreas del sector como propuestas votables.
+ *
+ * Las áreas son las propuestas iniciales: están en la lista desde el primer
+ * momento y se votan junto con las necesidades que escriben los asistentes.
+ * Solo se siembran una vez (la marca queda en la configuración), para que si
+ * la persona dinamizadora quita alguna, no vuelva a aparecer sola.
+ */
+function sembrarAreas() {
+  if (config.areasSembradas) return;
+  const existentes = new Set(config.ideas.map((i) => i.id));
+  const ahora = new Date().toISOString();
+  for (const area of AREAS_SECTOR) {
+    if (existentes.has(area.id)) continue;
+    config.ideas.push({
+      id: area.id,
+      texto: area.propuesta,
+      categoria: area.titulo,
+      origen: 'area',
+      creada: ahora
+    });
+  }
+  config.areasSembradas = true;
+  guardarConfig();
 }
 
 /**
@@ -236,9 +264,8 @@ function actualizarAgregados(seccion, datos) {
       }
       break;
     case 'retos':
-      if (Array.isArray(datos.categorias)) {
-        for (const c of datos.categorias) incrementar(agregados.retos, c);
-      }
+      // El recuento por área ya no viene de una categoría marcada: ahora
+      // cada área es una propuesta y se cuenta por los votos que recibe.
       break;
     case 'mesa':
       if (datos.caso) incrementar(agregados.casos, String(datos.caso));
@@ -342,7 +369,7 @@ function aprobarNecesidades() {
  * misma (no se duplica) y vuelve a pasar por la cola de revisión para la
  * exportación.
  */
-function publicarNecesidad(id, { categorias, reto }) {
+function publicarNecesidad(id, { reto }) {
   const avisos = detectarDatosPersonales(reto);
   if (avisos.length) {
     throw Object.assign(new Error(mensajeDatosPersonales(avisos)), { status: 400 });
@@ -357,7 +384,7 @@ function publicarNecesidad(id, { categorias, reto }) {
   const idea = {
     id: ideaId,
     texto: reto,
-    categoria: categorias[0] || 'General',
+    categoria: '',
     origen: 'participante',
     creada: anterior?.creada || ahora,
     actualizada: ahora
@@ -717,13 +744,9 @@ function validarSemaforo(datos) {
 }
 
 function validarRetos(datos) {
-  // El área donde más se necesita apoyo es una sola: es el tema de la
-  // necesidad, y así el recuento por áreas se puede sumar sin duplicados.
-  const candidatas = Array.isArray(datos.categorias)
-    ? [...new Set(datos.categorias.filter((c) => CATEGORIAS_RETO.includes(c)))]
-    : [];
-  const categorias = candidatas.slice(0, 1);
-  return { categorias, reto: limpiarTexto(datos.reto).slice(0, LIMITE_NECESIDAD) };
+  // La necesidad se publica tal cual, sin obligar a encajarla en un área:
+  // las áreas son propuestas que se votan en la misma lista.
+  return { reto: limpiarTexto(datos.reto).slice(0, LIMITE_NECESIDAD) };
 }
 
 function validarMesa(datos) {

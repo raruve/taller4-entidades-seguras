@@ -368,6 +368,46 @@ export const CATEGORIAS_RETO = [
   'Cultura interna'
 ];
 
+/**
+ * Áreas del sector: las propuestas iniciales que se votan desde el
+ * principio, junto con las necesidades que escriben los asistentes.
+ *
+ * No son una categoría obligatoria de la necesidad: la necesidad se publica
+ * tal cual, al mismo nivel que estas áreas. Lo que se vota es el conjunto.
+ */
+export const AREAS_SECTOR = [
+  {
+    id: 'area-formacion',
+    titulo: 'Formación',
+    propuesta: 'Formación práctica para el equipo y el voluntariado: IA, datos y ciberseguridad'
+  },
+  {
+    id: 'area-recursos',
+    titulo: 'Recursos técnicos',
+    propuesta: 'Herramientas y servicios digitales a un precio asumible para entidades pequeñas'
+  },
+  {
+    id: 'area-juridico',
+    titulo: 'Asesoramiento jurídico',
+    propuesta: 'Asesoramiento jurídico accesible y adaptado a la realidad de las entidades pequeñas'
+  },
+  {
+    id: 'area-proveedores',
+    titulo: 'Proveedores',
+    propuesta: 'Modelos de contrato y condiciones claras con los proveedores que ven nuestros datos (nube, CRM, IA)'
+  },
+  {
+    id: 'area-financiacion',
+    titulo: 'Financiación',
+    propuesta: 'Financiación para proyectos de tecnología, datos y formación del voluntariado'
+  },
+  {
+    id: 'area-cultura',
+    titulo: 'Cultura interna',
+    propuesta: 'Que la protección de datos y el uso responsable de la IA formen parte del día a día de la entidad'
+  }
+];
+
 export const IDEAS_INICIALES = [
   { texto: 'Formación práctica en IA para equipos y voluntariado', categoria: 'Formación' },
   { texto: 'Asesoría jurídica accesible para entidades pequeñas', categoria: 'Asesoramiento jurídico' },

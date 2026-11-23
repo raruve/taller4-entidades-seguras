@@ -222,18 +222,6 @@ function pintarCasos(datos) {
   </section>`;
 }
 
-function pintarRetos(datos) {
-  const retos = datos.retos || {};
-  const claves = Object.entries(retos).sort((a, b) => b[1] - a[1]);
-  if (!claves.length) return bloqueVacio('Retos por categoría', 'Qué necesitan las entidades');
-  const maximo = Math.max(1, ...claves.map(([, v]) => v));
-  return `<section class="bloque-panel">
-    <h2>Retos por categoría</h2>
-    <p class="sub">Áreas donde se pide más apoyo</p>
-    ${claves.map(([k, v]) => barra(k, v, maximo)).join('')}
-  </section>`;
-}
-
 /**
  * Necesidades del sector.
  *
@@ -244,26 +232,25 @@ function pintarRetos(datos) {
  * la sala, no la pantalla).
  */
 function pintarIdeas(datos) {
-  const ideas = (datos.ideas || []).slice().sort((a, b) => b.votos - a.votos).slice(0, 8);
+  // Áreas del sector y necesidades del grupo, todo en la misma lista y
+  // ordenado por votos: arriba del todo, lo que más pesa.
+  const ideas = (datos.ideas || []).slice().sort((a, b) => b.votos - a.votos).slice(0, 10);
   const totalVotos = (datos.ideas || []).reduce((suma, i) => suma + (i.votos || 0), 0);
   if (!ideas.length) {
-    return bloqueVacio(
-      'Necesidades del sector',
-      datos.votacionAbierta ? 'Votación abierta' : 'Todavía no hay necesidades publicadas'
-    );
+    return bloqueVacio('Qué pide el sector', 'Todavía no hay propuestas cargadas');
   }
   return `<section class="bloque-panel">
-    <h2>Necesidades del sector</h2>
+    <h2>Qué pide el sector</h2>
     <p class="sub">${
       datos.votacionAbierta
-        ? `Votación abierta · ${ideas.length} necesidades · ${totalVotos} votos`
-        : `${ideas.length} necesidades · ${totalVotos} votos · las más votadas primero`
+        ? `Votación abierta · ${ideas.length} propuestas · ${totalVotos} votos`
+        : `${ideas.length} propuestas · ${totalVotos} votos · las más votadas primero`
     }</p>
     ${ideas
       .map(
         (i) => `<div class="idea-panel">
           <span class="idea-texto">${escapar(i.texto)}</span>
-          <span class="idea-meta"><span class="idea-tema">${escapar(i.categoria || 'General')}</span></span>
+          <span class="idea-meta"><span class="idea-tema">${escapar(i.categoria || 'Necesidad del grupo')}</span></span>
           <span class="votos">${i.votos} ${i.votos === 1 ? 'voto' : 'votos'}</span>
         </div>`
       )
@@ -283,7 +270,6 @@ function pintar() {
     pintarSemaforo(datos),
     pintarTermometro(datos),
     pintarCasos(datos),
-    pintarRetos(datos),
     pintarIdeas(datos)
   ].join('');
 }

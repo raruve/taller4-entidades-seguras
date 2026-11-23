@@ -9,7 +9,7 @@
  *    recuento muy pequeño podría permitir reidentificar a quien respondió.
  */
 import { MIN_N } from './config.js';
-import { SEMAFORO, TERMOMETRO, CATEGORIAS_RETO, CASOS } from './content.js';
+import { SEMAFORO, TERMOMETRO, CASOS } from './content.js';
 
 function celda(valor) {
   const texto = valor === null || valor === undefined ? '' : String(valor);
@@ -90,16 +90,6 @@ export function datosAgregados(resumen) {
       suprimido: n < MIN_N
     });
   }
-  for (const categoria of CATEGORIAS_RETO) {
-    const n = resumen.retos?.[categoria] || 0;
-    filas.push({
-      bloque: 'Retos · categorías',
-      pregunta: '¿Qué necesita el sector?',
-      opcion: categoria,
-      respuestas: n,
-      suprimido: n < MIN_N
-    });
-  }
   for (const caso of CASOS) {
     const n = resumen.casos?.[caso.id]?.respuestas || 0;
     filas.push({
@@ -110,16 +100,16 @@ export function datosAgregados(resumen) {
       suprimido: n < MIN_N
     });
   }
-  // Necesidades del sector. Solo entran las aprobadas: las que escribió el
-  // equipo del taller (valen como aprobadas) y las que la persona
-  // dinamizadora ha revisado en la moderación.
+  // Áreas del sector y necesidades del grupo, con los votos que han
+  // recibido. Solo entran las necesidades revisadas por la persona
+  // dinamizadora; las áreas son propuestas de partida.
   for (const idea of resumen.ideas || []) {
     if (idea.origen === 'participante' && idea.estado !== 'aprobado') continue;
     const n = idea.votos || 0;
     filas.push({
-      bloque: 'Necesidades del sector · votación',
+      bloque: idea.origen === 'area' ? 'Áreas del sector · votación' : 'Necesidades del sector · votación',
       pregunta: idea.texto,
-      opcion: idea.categoria || 'Sin categoría',
+      opcion: idea.categoria || 'Necesidad del grupo',
       respuestas: n,
       suprimido: n < MIN_N
     });
@@ -195,7 +185,7 @@ export function jsonAgregados(resumen, conservacion) {
       ])
     ),
     prioridades: suprimir(resumen.prioridades),
-    retos: suprimir(resumen.retos),
+    retos: suprimir(resumen.retos || {}),
     casos: Object.fromEntries(
       CASOS.map((c) => {
         const n = resumen.casos?.[c.id]?.respuestas || 0;

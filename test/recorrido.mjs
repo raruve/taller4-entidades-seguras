@@ -365,7 +365,7 @@ comprobar(true, 'El panel del ponente rechaza una contraseña incorrecta');
 await panel.fill('#password', PASSWORD_ADMIN);
 await panel.click('#form-acceso button[type="submit"]');
 await panel.waitForSelector('.bloque-panel', { timeout: 10000 });
-comprobar((await panel.locator('.bloque-panel').count()) >= 5, 'El panel del ponente muestra los bloques de resultados');
+comprobar((await panel.locator('.bloque-panel').count()) >= 4, 'El panel del ponente muestra los bloques de resultados');
 comprobar((await panel.locator('.medida-panel').count()) === 10, 'El semáforo muestra las diez medidas');
 comprobar(
   (await panel.locator('.medida-panel .pildora.verde').count()) === 10,
@@ -590,29 +590,26 @@ console.log('\n▸ Necesidades del sector');
 await page.reload({ waitUntil: 'networkidle' });
 await esperarHash(page, 'semaforo');
 await page.click('#btn-siguiente');
-await page.waitForSelector('[data-categoria]');
+await page.waitForSelector('#campo-reto');
 
-// El tema de la necesidad es de una sola opción: es el área donde más se
-// necesita apoyo, y así el recuento por áreas se puede sumar.
-await page.click('[data-categoria="Formación"]');
+// Las áreas del sector son propuestas que se votan desde el principio, y
+// están en la misma lista que las necesidades del grupo.
 comprobar(
-  (await page.locator('[data-categoria][aria-pressed="true"]').count()) === 1,
-  'El tema de la necesidad es de una sola opción'
+  (await page.locator('.necesidad').count()) >= 6,
+  'Las áreas del sector aparecen como propuestas votables'
 );
-await page.click('[data-categoria="Proveedores"]');
 comprobar(
-  (await page.locator('[data-categoria][aria-pressed="true"]').count()) === 1 &&
-    (await page.locator('[data-categoria="Proveedores"][aria-pressed="true"]').count()) === 1,
-  'Al elegir otro tema, se sustituye el anterior'
+  (await page.locator('.necesidad').first().innerText()).toLowerCase().includes('formación'),
+  'Las propuestas iniciales son las áreas del sector'
 );
 
-// El texto que se está escribiendo no se pierde al repintar la pantalla.
+// La necesidad no tiene que encajar en ninguna categoría.
+comprobar(
+  (await page.locator('#campo-reto').getAttribute('maxlength')) === '200' &&
+    (await page.locator('[data-categoria]').count()) === 0,
+  'No hace falta elegir un área para escribir la necesidad'
+);
 await page.fill('#campo-reto', 'Necesitamos formación práctica en IA para el equipo y el voluntariado.');
-await page.click('[data-categoria="Formación"]');
-comprobar(
-  (await page.inputValue('#campo-reto')).includes('formación práctica'),
-  'El texto de la necesidad no se pierde al cambiar el tema'
-);
 await page.waitForTimeout(200);
 await captura(page, 'retos');
 
@@ -635,8 +632,12 @@ comprobar(
   'La necesidad publicada aparece en la lista del grupo'
 );
 comprobar(
-  (await page.locator('.necesidad').first().innerText()).includes('formación práctica'),
+  (await page.locator('.lista-necesidades').innerText()).toLowerCase().includes('necesitamos formación práctica'),
   'La lista muestra el texto de la necesidad'
+);
+comprobar(
+  (await page.locator('.necesidad').first().innerText()).toLowerCase().includes('formación'),
+  'Las áreas del sector salen antes que las necesidades'
 );
 
 // Otra persona (otra sesión) publica otra necesidad: tiene que aparecer en
@@ -644,7 +645,6 @@ comprobar(
 const otra = await contexto.newPage();
 await otra.goto(`${BASE}/#/retos`, { waitUntil: 'networkidle' });
 await otra.waitForSelector('#campo-reto');
-await otra.click('[data-categoria="Financiación"]');
 await otra.fill('#campo-reto', 'Nos hace falta apoyo para financiar la formación del voluntariado.');
 await otra.click('#btn-publicar-necesidad');
 await otra.waitForSelector('#aviso-retos .mensaje-ok', { timeout: 8000 });
@@ -659,17 +659,21 @@ comprobar(
   'La necesidad ajena se lee tal cual se escribió'
 );
 
-// Votación: se pueden elegir hasta dos necesidades.
+// Votación: se pueden elegir hasta dos, y pueden ser un área y una necesidad.
 comprobar(await page.locator('#btn-votar').isVisible(), 'La votación está disponible');
-await page.locator('[data-idea]').first().click();
+await page
+  .locator('.necesidad', { hasText: 'Necesitamos formación práctica' })
+  .first()
+  .locator('[data-idea]')
+  .click();
 comprobar(
   (await page.locator('[data-idea][aria-pressed="true"]').count()) === 1,
   'Se puede votar una necesidad'
 );
-await page.locator('[data-idea]').nth(1).click();
+await page.locator('.necesidad', { hasText: 'Formación' }).first().locator('[data-idea]').click();
 comprobar(
   (await page.locator('[data-idea][aria-pressed="true"]').count()) === 2,
-  'Se pueden votar dos necesidades'
+  'Se pueden votar una necesidad y un área a la vez'
 );
 await page.locator('[data-idea]').nth(2).click();
 comprobar(

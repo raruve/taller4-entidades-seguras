@@ -457,17 +457,7 @@ function guardadasPrioridades(lista) {
 function vistaRetos() {
   const c = estado.config;
   const guardado = estado.respuestas.retos || {};
-  const categorias = guardado.categorias || [];
   const redacto = estado.borrador.reto || guardado.reto || '';
-
-  // El área donde más se necesita apoyo es una sola: es el tema de la
-  // necesidad y así el recuento por áreas se puede sumar sin duplicados.
-  const chips = c.categoriasReto
-    .map(
-      (cat) => `<button type="button" class="chip chip-tema" data-categoria="${escapar(cat)}"
-        aria-pressed="${categorias.includes(cat)}">${escapar(cat)}</button>`
-    )
-    .join('');
 
   const bloqueNecesidades = bloqueNecesidadesHtml();
   return `
@@ -475,10 +465,8 @@ function vistaRetos() {
       <div class="kicker">Necesidades del sector · 10 min</div>
       <h2>¿Qué necesita el sector?</h2>
       <p class="entradilla">Escribid la necesidad que habéis detectado: se publica en la app en el acto y todos los asistentes pueden verla y votarla desde su móvil. Vuestras necesidades alimentan la agenda de la Red Solidaria para 2027.</p>
-      <p class="campo" style="margin-bottom:.4rem"><strong>¿En qué área necesitáis más apoyo?</strong></p>
-      <div class="chips">${chips}</div>
 
-      <div class="campo-bloque" style="margin-top:1rem">
+      <div class="campo-bloque" style="margin-top:.6rem">
         <label class="campo" for="campo-reto">Vuestra necesidad (se publica en la app)</label>
         <textarea id="campo-reto" rows="3" maxlength="200" placeholder="Una frase, sin nombres ni datos concretos.">${escapar(redacto)}</textarea>
         <div class="contador" data-contador="reto">0 / 200</div>
@@ -504,10 +492,18 @@ function vistaRetos() {
 function bloqueNecesidadesHtml() {
   const abierta = estado.votacionAbierta;
   const votos = Object.fromEntries((estado.resultadosIdeas || []).map((r) => [r.id, r.votos || 0]));
+  // Mientras la votación está abierta, las áreas (las propuestas de
+  // partida) van primero y en su orden; después, las necesidades del grupo,
+  // de la más reciente a la más antigua. Al cerrarse, manda el recuento.
   const lista = estado.ideas
     .slice()
+    .map((i, indice) => ({ ...i, _indice: indice }))
     .sort((a, b) => {
       if (!abierta) return (votos[b.id] || 0) - (votos[a.id] || 0);
+      const areaA = a.origen === 'area';
+      const areaB = b.origen === 'area';
+      if (areaA !== areaB) return areaA ? -1 : 1;
+      if (areaA) return a._indice - b._indice;
       return String(b.creada || '').localeCompare(String(a.creada || ''));
     });
 
@@ -518,14 +514,14 @@ function bloqueNecesidadesHtml() {
       const numero = votos[i.id] || 0;
       return `<li class="necesidad${marcada ? ' elegida' : ''}">
         <div class="necesidad-cabecera">
-          <span class="necesidad-tema">${escapar(i.categoria || 'General')}</span>
+          ${i.categoria ? `<span class="necesidad-tema">${escapar(i.categoria)}</span>` : '<span></span>'}
           ${abierta ? '' : `<span class="necesidad-votos">${numero} ${numero === 1 ? 'voto' : 'votos'}</span>`}
         </div>
         <p class="necesidad-texto">${escapar(i.texto)}</p>
         ${
           abierta
             ? `<button type="button" class="boton-voto" data-idea="${escapar(i.id)}" aria-pressed="${marcada}">${
-                marcada ? '✓ Votada' : 'Votar esta necesidad'
+                marcada ? '✓ Votada' : 'Votar'
               }</button>`
             : ''
         }
@@ -535,13 +531,13 @@ function bloqueNecesidadesHtml() {
 
   return `<section class="tarjeta" id="bloque-necesidades">
       <div class="kicker">${abierta ? 'Votación abierta' : 'Necesidades del grupo'}</div>
-      <h2>${abierta ? 'Votad las necesidades' : 'Las necesidades recogidas'}</h2>
+      <h2>${abierta ? 'Votad las necesidades' : 'Lo que pide el sector'}</h2>
       <p class="entradilla">${
         abierta
-          ? 'Elegid hasta dos necesidades: las que veáis más necesarias para el sector. Después de la votación se publicarán las más votadas.'
+          ? 'Elegid hasta dos: una propuesta de área o una necesidad que haya escrito alguien del grupo. Después se publicarán las más votadas.'
           : estado.ideas.length
-            ? 'Estas son las necesidades que ha publicado el grupo. La votación se abre al final de la sesión.'
-            : 'Todavía no hay necesidades publicadas. En cuanto el grupo las vaya publicando, aparecerán aquí.'
+            ? 'Estas son las propuestas del sector y las necesidades que va publicando el grupo. La votación se abre al final de la sesión.'
+            : 'Todavía no hay propuestas. En cuanto el grupo publique necesidades, aparecerán aquí.'
       }</p>
       ${lista.length ? `<ul class="lista-necesidades">${items}</ul>` : ''}
       <div class="acciones" style="margin-top:.8rem">
@@ -735,18 +731,6 @@ function conectarEventos() {
   const btnPublicar = $('#btn-publicar-necesidad');
   if (btnPublicar) btnPublicar.addEventListener('click', publicarNecesidad);
 
-  // El tema de la necesidad es uno solo.
-  $$('[data-categoria]').forEach((chip) => {
-    chip.addEventListener('click', () => {
-      const guardado = estado.respuestas.retos || { categorias: [], reto: '' };
-      const cat = chip.dataset.categoria;
-      const yaEsta = (guardado.categorias || [])[0] === cat;
-      const categorias = yaEsta ? [] : [cat];
-      estado.respuestas.retos = { ...guardado, categorias };
-      render();
-    });
-  });
-
   // Votar una necesidad: se pueden elegir dos.
   $$('[data-idea]').forEach((boton) => {
     boton.addEventListener('click', () => {
@@ -899,21 +883,17 @@ function descargarAutodiagnostico() {
 }
 
 async function publicarNecesidad() {
-  const guardado = estado.respuestas.retos || { categorias: [], reto: '' };
+  const guardado = estado.respuestas.retos || { reto: '' };
   const campo = $('#campo-reto');
   const reto = campo ? campo.value : guardado.reto || '';
   if (!reto.trim()) {
     mostrarAviso('#aviso-retos', 'Escribid vuestra necesidad para poder publicarla.', 'error');
     return;
   }
-  if ((guardado.categorias || []).length === 0) {
-    mostrarAviso('#aviso-retos', 'Elegid el área donde más necesitáis apoyo.', 'error');
-    return;
-  }
   try {
     const respuesta = await api('/api/respuestas/retos', {
       method: 'POST',
-      body: { categorias: guardado.categorias || [], reto }
+      body: { reto }
     });
     estado.respuestas.retos = { ...respuesta };
     estado.borrador.reto = '';
