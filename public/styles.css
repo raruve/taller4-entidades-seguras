@@ -1143,3 +1143,34 @@ details.legal-detall[open] > summary::before {
   flex: 0 0 auto;
   width: auto;
 }
+
+/* Acciones de cada necesidad: votar y, si es tuya, quitarla. */
+.necesidad-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.boton-quitar {
+  border: 1px solid var(--azul-medio);
+  background: var(--blanco);
+  color: var(--gris);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.boton-quitar:hover {
+  border-color: var(--coral);
+  color: var(--granate);
+}
+
+.boton-quitar[disabled] {
+  opacity: 0.5;
+  cursor: default;
+}

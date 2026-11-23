@@ -297,6 +297,20 @@ async function api(req, res, ruta, url) {
     return;
   }
 
+  /* --- retirar una necesidad publicada por esta misma sesión --- */
+
+  if (ruta.startsWith('/api/necesidades/') && metodo === 'DELETE') {
+    const id = idDeSesion(url);
+    if (!id) {
+      responderError(res, 400, 'Sesión no válida.');
+      return;
+    }
+    const ideaId = decodeURIComponent(ruta.slice('/api/necesidades/'.length));
+    await store.quitarNecesidad(id, ideaId);
+    responderJson(res, { ok: true });
+    return;
+  }
+
   /* --- código QR de acceso (público: solo codifica la dirección de la app) --- */
 
   if ((ruta === '/api/qr.svg' || ruta === '/api/qr.png') && metodo === 'GET') {

@@ -160,10 +160,13 @@ Para cada caso:
    técnicos, asesoramiento jurídico, proveedores, financiación y cultura
    interna) propuestas como puntos de partida. Son **propuestas votables**, no
    una casilla obligatoria.
-2. Cada entidad escribe **su necesidad** en una frase, sin tener que encajarla
-   en ninguna de las áreas, y pulsa «Publicar necesidad». Esa necesidad
-   **aparece en el móvil de todo el mundo** y se puede votar. No hay que hacer
-   nada más: el listado se refresca solo cada 10 segundos en cada móvil.
+2. Cada entidad escribe **sus necesidades** en una frase cada una, sin tener que
+   encajarlas en ninguna de las áreas, y pulsa «Publicar necesidad». Cada
+   necesidad **aparece en el móvil de todo el mundo** y se puede votar. Se
+   pueden publicar todas las que haga falta: el formulario se queda libre
+   después de cada una, y quien ha publicado una puede quitarla si se ha
+   equivocado (sale un «Quitar la mía» al lado). El listado se refresca solo
+   cada 10 segundos en cada móvil.
 3. Si quieres que entren necesidades que se han dicho en voz alta pero no se
    han escrito, puedes añadirlas tú desde el panel → **«Necesidades»**.
 4. Pulsa **«Abrir votación»**. Los participantes ven la lista completa (áreas
@@ -181,8 +184,9 @@ necesidades, mira el orden de la lista, no el total.
 la app la filtra automáticamente (si detecta un correo, un teléfono, un IBAN o
 un enlace, no la publica y avisa). Aun así, en «Revisión de textos» verás las
 necesidades marcadas como «publicada en la app»: revísalas y apruébalas (con
-un solo botón) antes de descargar el informe para la Red Solidaria. Si algo no
-sirve, recházala y sale de la app al instante.
+un solo botón) antes de descargar el informe para la Red Solidaria. Cada
+necesidad se revisa por separado, así que puedes aprobar unas y descartar
+otras. Si algo no sirve, recházala y sale de la app al instante.
 
 ---
 

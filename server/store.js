@@ -285,9 +285,13 @@ function actualizarAgregados(seccion, datos) {
  * ------------------------------------------------------------------ */
 
 const CLAVE_TEXTO = (id, campo) => `${id}#${campo}`;
+/** Cada necesidad publicada tiene su propia entrada de moderación. */
+const CLAVE_NECESIDAD = (id, ideaId) => `${id}#reto#${ideaId}`;
 
 function registrarTextos(id, seccion, datos) {
-  for (const campo of ['riesgo', 'hacer', 'necesidad', 'reto']) {
+  // 'reto' no entra aquí: cada necesidad publicada registra su propia
+  // entrada de moderación (una por necesidad).
+  for (const campo of ['riesgo', 'hacer', 'necesidad']) {
     const texto = datos[campo];
     if (typeof texto === 'string' && texto.trim()) {
       const clave = CLAVE_TEXTO(id, campo);
@@ -340,7 +344,7 @@ function aprobarNecesidades() {
     let aprobadas = 0;
     const ahora = new Date().toISOString();
     for (const [clave, m] of Object.entries(respuestas.moderacion)) {
-      if (!clave.endsWith('#reto') || m.estado !== 'pendiente') continue;
+      if (!clave.includes('#reto#') || m.estado !== 'pendiente') continue;
       m.estado = 'aprobado';
       m.actualizado = ahora;
       aprobadas++;
@@ -375,35 +379,64 @@ function publicarNecesidad(id, { reto }) {
     throw Object.assign(new Error(mensajeDatosPersonales(avisos)), { status: 400 });
   }
 
-  const clave = CLAVE_TEXTO(id, 'reto');
-  const anterior = respuestas.moderacion[clave];
   const ahora = new Date().toISOString();
-  const ideaId =
-    anterior?.ideaId || `n${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`;
+  // Cada publicación es una necesidad nueva: una persona puede publicar
+  // todas las que necesite, y cada una se revisa por separado.
+  const ideaId = `n${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`;
 
   const idea = {
     id: ideaId,
     texto: reto,
     categoria: '',
     origen: 'participante',
-    creada: anterior?.creada || ahora,
+    creada: ahora,
     actualizada: ahora
   };
 
-  const indice = config.ideas.findIndex((i) => i.id === ideaId);
-  if (indice >= 0) config.ideas[indice] = { ...config.ideas[indice], ...idea };
-  else config.ideas.push(idea);
+  config.ideas.push(idea);
   guardarConfig();
 
-  respuestas.moderacion[clave] = {
+  respuestas.moderacion[CLAVE_NECESIDAD(id, ideaId)] = {
     estado: 'pendiente',
     ideaId,
-    creado: anterior?.creado || ahora,
+    creado: ahora,
     actualizado: ahora
   };
 
-  registrarAuditoria('NECESIDAD_PUBLICADA', { id: ideaId, categoria: idea.categoria });
+  registrarAuditoria('NECESIDAD_PUBLICADA', { id: ideaId });
   return idea;
+}
+
+/**
+ * Quita una necesidad publicada por esta misma sesión.
+ *
+ * Se permite para que una persona pueda rectificar o retirar lo que ha
+ * escrito sin que la persona dinamizadora tenga que hacerlo una por una.
+ * Solo se pueden quitar las necesidades de la sesión que lo pide: el
+ * servidor comprueba la pertenencia antes de borrar nada.
+ */
+function quitarNecesidad(id, ideaId) {
+  return enCola(async () => {
+    const sesion = respuestas.sesiones[id];
+    const propias = (sesion?.retos?.necesidades || []).map((n) => n.id);
+    if (!propias.includes(ideaId)) {
+      throw Object.assign(new Error('Esa necesidad no es tuya.'), { status: 403 });
+    }
+    const antes = config.ideas.length;
+    config.ideas = config.ideas.filter((i) => i.id !== ideaId);
+    if (config.ideas.length !== antes) guardarConfig();
+
+    delete respuestas.moderacion[CLAVE_NECESIDAD(id, ideaId)];
+    delete agregados.votos[ideaId];
+
+    sesion.retos.necesidades = sesion.retos.necesidades.filter((n) => n.id !== ideaId);
+    sesion.retos.actualizado = new Date().toISOString();
+
+    escribirJson(FICHERO_RESPUESTAS, respuestas);
+    escribirJson(FICHERO_AGREGADOS, agregados);
+    registrarAuditoria('NECESIDAD_RETIRADA', { id: ideaId, por: 'participante' });
+    return true;
+  });
 }
 
 /* ------------------------------------------------------------------ *
@@ -519,18 +552,21 @@ function resumen() {
       };
       c.ultima = c.mesas[alias].ultima;
     }
-    if (sesion.retos && sesion.retos.reto && sesion.retos.reto.trim()) {
-      const clave = CLAVE_TEXTO(id, 'reto');
+    // Cada necesidad publicada es un texto libre distinto, con su propia
+    // revisión: pueden ser varias por persona.
+    for (const necesidad of sesion.retos?.necesidades || []) {
+      const clave = CLAVE_NECESIDAD(id, necesidad.id);
       const registro = respuestas.moderacion[clave] || {};
       textos.push({
         id: clave,
         campo: 'reto',
-        texto: sesion.retos.reto.trim(),
+        ideaId: necesidad.id,
+        texto: necesidad.texto,
         estado: registro.estado || 'pendiente',
         // Las necesidades se publican en la app en el acto: la persona
         // dinamizadora las ve en la pantalla del ponente y aquí decides si
         // pueden ir en el informe para la Red Solidaria.
-        publicada: Boolean(registro.ideaId)
+        publicada: true
       });
     }
     for (const campo of ['riesgo', 'hacer', 'necesidad']) {
@@ -951,9 +987,19 @@ export const store = {
     const limpio = validarRetos(datos);
     return enCola(async () => {
       const sesion = obtenerSesion(id);
-      // La necesidad del formulario se publica en la app en el acto.
+      // La necesidad del formulario se publica en la app en el acto. Cada
+      // publicación añade una necesidad nueva a las de esta sesión.
       const idea = limpio.reto ? publicarNecesidad(id, limpio) : null;
-      sesion.retos = { ...limpio, ideaId: idea ? idea.id : null, actualizado: new Date().toISOString() };
+      const necesita = idea
+        ? [...(sesion.retos?.necesidades || []), { id: idea.id, texto: idea.texto, creada: idea.creada }]
+        : sesion.retos?.necesidades || [];
+      sesion.retos = {
+        ...sesion.retos,
+        ...limpio,
+        ideaId: idea ? idea.id : sesion.retos?.ideaId || null,
+        necesidades: necesita,
+        actualizado: new Date().toISOString()
+      };
       sesion.actualizada = new Date().toISOString();
       registrarTextos(id, 'retos', limpio);
       escribirJson(FICHERO_RESPUESTAS, respuestas);
@@ -981,6 +1027,7 @@ export const store = {
   resumenPanel,
   moderar,
   aprobarNecesidades,
+  quitarNecesidad,
   listarMesas,
   crearMesa,
   actualizarMesa,

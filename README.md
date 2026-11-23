@@ -69,11 +69,11 @@ en la que se borrarán los datos brutos.
 4. **Semáforo** — diez medidas en verde/ámbar/rojo y tres prioridades, con
    hoja imprimible descargable.
 5. **Necesidades del sector** — las seis áreas del sector entran como
-   propuestas votables desde el principio, y cada entidad escribe su
-   necesidad (sin obligarla a encajar en un área). La necesidad **se publica en
-   el acto en el móvil de todo el mundo** y se puede votar desde ahí; el
-   recuento se proyecta en la pantalla del ponente, con lo más votado arriba
-   del todo.
+   propuestas votables desde el principio, y cada entidad escribe sus
+   necesidades (sin obligarlas a encajar en un área): puede publicar todas las
+   que necesite y quitar las suyas. Cada necesidad **se publica en el acto en
+   el móvil de todo el mundo** y se puede votar desde ahí; el recuento se
+   proyecta en la pantalla del ponente, con lo más votado arriba del todo.
 6. **Cierre** — los cuatro mensajes para recordar y las prioridades propias.
 
 ### Para el equipo dinamizador (`/admin`)

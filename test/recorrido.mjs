@@ -640,6 +640,33 @@ comprobar(
   'Las áreas del sector salen antes que las necesidades'
 );
 
+// Se puede publicar más de una necesidad: la segunda no sustituye a la
+// primera, sino que se suma.
+const antesDePublicar = await page.locator('.necesidad').count();
+await page.fill('#campo-reto', 'También necesitamos apoyo para redactar nuestra política de datos.');
+await page.click('#btn-publicar-necesidad');
+await page.waitForTimeout(900);
+comprobar(
+  (await page.locator('.necesidad').count()) === antesDePublicar + 1,
+  'Se puede publicar una segunda necesidad sin perder la primera'
+);
+comprobar(
+  (await page.locator('.lista-necesidades').innerText()).includes('política de datos'),
+  'La segunda necesidad también sale en la lista'
+);
+comprobar(
+  (await page.inputValue('#campo-reto')) === '',
+  'El formulario queda libre para escribir la siguiente necesidad'
+);
+
+// Y se puede quitar una necesidad propia.
+await page.locator('[data-quitar]').first().click();
+await page.waitForTimeout(900);
+comprobar(
+  (await page.locator('.necesidad').count()) === antesDePublicar,
+  'Se puede quitar una necesidad publicada por esta sesión'
+);
+
 // Otra persona (otra sesión) publica otra necesidad: tiene que aparecer en
 // el móvil del primero sin que recargue la página.
 const otra = await contexto.newPage();

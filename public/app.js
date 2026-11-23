@@ -471,6 +471,7 @@ function vistaRetos() {
         <textarea id="campo-reto" rows="3" maxlength="200" placeholder="Una frase, sin nombres ni datos concretos.">${escapar(redacto)}</textarea>
         <div class="contador" data-contador="reto">0 / 200</div>
         <div class="alerta-datos" data-alerta="reto" hidden></div>
+        <p class="nota" style="margin-top:.4rem">Podéis publicar todas las necesidades que necesitéis: cada una sale en la app y se puede votar.</p>
       </div>
 
       <div class="caja-aviso">${escapar(c.aviso)}</div>
@@ -479,6 +480,11 @@ function vistaRetos() {
     </section>
     ${bloqueNecesidades}
     ${pieHtml()}`;
+}
+
+/** Identificadores de las necesidades que ha publicado esta sesión. */
+function misNecesidades() {
+  return (estado.respuestas.retos?.necesidades || []).map((n) => n.id);
 }
 
 /**
@@ -508,6 +514,7 @@ function bloqueNecesidadesHtml() {
     });
 
   const elegidas = estado.voto.seleccionadas;
+  const mias = misNecesidades();
   const items = lista
     .map((i) => {
       const marcada = elegidas.includes(i.id);
@@ -518,13 +525,20 @@ function bloqueNecesidadesHtml() {
           ${abierta ? '' : `<span class="necesidad-votos">${numero} ${numero === 1 ? 'voto' : 'votos'}</span>`}
         </div>
         <p class="necesidad-texto">${escapar(i.texto)}</p>
-        ${
-          abierta
-            ? `<button type="button" class="boton-voto" data-idea="${escapar(i.id)}" aria-pressed="${marcada}">${
-                marcada ? '✓ Votada' : 'Votar'
-              }</button>`
-            : ''
-        }
+        <div class="necesidad-acciones">
+          ${
+            abierta
+              ? `<button type="button" class="boton-voto" data-idea="${escapar(i.id)}" aria-pressed="${marcada}">${
+                  marcada ? '✓ Votada' : 'Votar'
+                }</button>`
+              : ''
+          }
+          ${
+            mias.includes(i.id)
+              ? `<button type="button" class="boton-quitar" data-quitar="${escapar(i.id)}">Quitar la mía</button>`
+              : ''
+          }
+        </div>
       </li>`;
     })
     .join('');
@@ -752,6 +766,27 @@ function conectarEventos() {
   const btnVotar = $('#btn-votar');
   if (btnVotar) btnVotar.addEventListener('click', enviarVotacion);
 
+  // Quitar una necesidad que ha publicado esta sesión.
+  $$('[data-quitar]').forEach((boton) => {
+    boton.addEventListener('click', async () => {
+      const id = boton.dataset.quitar;
+      boton.disabled = true;
+      try {
+        await api(`/api/necesidades/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        estado.ideas = estado.ideas.filter((i) => i.id !== id);
+        estado.respuestas.retos = {
+          ...estado.respuestas.retos,
+          necesidades: (estado.respuestas.retos?.necesidades || []).filter((n) => n.id !== id)
+        };
+        render();
+        mostrarAviso('#aviso-retos', 'Necesidad retirada de la lista.', 'ok');
+      } catch (error) {
+        boton.disabled = false;
+        mostrarAviso('#aviso-retos', error.message, 'error');
+      }
+    });
+  });
+
   const btnRefrescar = $('#btn-refrescar-necesidades');
   if (btnRefrescar) {
     btnRefrescar.addEventListener('click', async () => {
@@ -895,16 +930,29 @@ async function publicarNecesidad() {
       method: 'POST',
       body: { reto }
     });
-    estado.respuestas.retos = { ...respuesta };
-    estado.borrador.reto = '';
-    // La necesidad recién publicada entra en la lista sin esperar al refresco.
-    if (respuesta.idea && !estado.ideas.some((i) => i.id === respuesta.idea.id)) {
-      estado.ideas = [...estado.ideas, respuesta.idea];
+    estado.respuestas.retos = { ...estado.respuestas.retos, ...respuesta };
+    // La necesidad recién publicada entra en la lista sin esperar al refresco
+    // y se apunta en las de esta sesión, para poder quitarla si hace falta.
+    if (respuesta.idea) {
+      if (!estado.ideas.some((i) => i.id === respuesta.idea.id)) {
+        estado.ideas = [...estado.ideas, respuesta.idea];
+      }
+      const necesidades = estado.respuestas.retos.necesidades || [];
+      if (!necesidades.some((n) => n.id === respuesta.idea.id)) {
+        estado.respuestas.retos = {
+          ...estado.respuestas.retos,
+          necesidades: [...necesidades, { id: respuesta.idea.id, texto: respuesta.idea.texto }]
+        };
+      }
     }
+    // El formulario queda libre para escribir la siguiente.
+    estado.borrador.reto = '';
     render();
+    const campo = $('#campo-reto');
+    if (campo) campo.value = '';
     mostrarAviso(
       '#aviso-retos',
-      '¡Publicada! Ya la ven todos los asistentes y pueden votarla. Editad el texto y volváis a publicar para corregirla.',
+      '¡Publicada! Ya la ven todos los asistentes y pueden votarla. Si tenéis más necesidades, escribidlas y publicadlas también.',
       'ok'
     );
   } catch (error) {
